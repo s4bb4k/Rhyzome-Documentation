@@ -1,0 +1,437 @@
+
+\documentclass[12pt,oneside,openany]{report}
+
+% ============================================================
+% 1. CONFIGURACIÓN DE IDIOMA Y CODIFICACIÓN
+% ============================================================
+
+\usepackage[spanish,es-tabla]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+
+% ============================================================
+% 2. CONFIGURACIÓN DE PÁGINA
+% ============================================================
+
+\usepackage[
+    letterpaper,
+    margin=2.54cm,
+    headheight=15pt
+]{geometry}
+
+\usepackage{graphicx}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{placeins}
+\usepackage{pdflscape}
+\usepackage{amsmath}
+
+% ============================================================
+% 3. TABLAS, FIGURAS Y ELEMENTOS GRÁFICOS
+% ============================================================
+
+\usepackage{
+    booktabs,
+    tabularx,
+    longtable,
+    array
+}
+
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{chngcntr}
+\usepackage[table]{xcolor}
+
+% ============================================================
+% 4. ENLACES Y REFERENCIAS CRUZADAS
+% ============================================================
+
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{url}
+
+% ============================================================
+% 5. CÓDIGO FUENTE Y LISTAS
+% ============================================================
+
+\usepackage{listings}
+\usepackage{enumitem}
+
+% ============================================================
+% 6. CITAS Y REFERENCIAS BIBLIOGRÁFICAS - APA 7
+% ============================================================
+
+\usepackage{csquotes}
+
+\usepackage[
+    backend=biber,
+    style=apa,
+    sorting=nyt
+]{biblatex}
+
+\addbibresource{referencias.bib}
+
+% ============================================================
+% 7. COLORES INSTITUCIONALES
+% ============================================================
+
+\definecolor{univalle}{HTML}{D90016}
+\definecolor{gris}{HTML}{555555}
+
+% ============================================================
+% 8. CONFIGURACIÓN DE HIPERVÍNCULOS
+% ============================================================
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=univalle,
+    urlcolor=univalle,
+    pdftitle={Rhyzome - Documentación final},
+    pdfauthor={Equipo Rhyzome}
+}
+
+% ============================================================
+% 9. FORMATO GENERAL APA 7
+% ============================================================
+
+% Interlineado doble
+\doublespacing
+
+% Sangría de primera línea
+\setlength{\parindent}{1.27cm}
+
+% Sin espacio adicional entre párrafos
+\setlength{\parskip}{0pt}
+
+% ============================================================
+% 10. FORMATO DE TÍTULOS Y SUBTÍTULOS
+% ============================================================
+
+% Capítulos
+\titleformat{\chapter}[hang]
+    {\normalfont\bfseries\centering\large}
+    {\thechapter.}
+    {0.6em}
+    {}
+
+\titlespacing*{\chapter}
+    {0pt}
+    {0pt}
+    {12pt}
+
+% Secciones
+\titleformat{\section}
+    {\normalfont\large\bfseries}
+    {\thesection}
+    {1em}
+    {}
+
+% Subsecciones
+\titleformat{\subsection}
+    {\normalfont\normalsize\bfseries}
+    {\thesubsection}
+    {1em}
+    {}
+
+% ============================================================
+% 11. ENCABEZADOS Y NUMERACIÓN DE PÁGINAS
+% ============================================================
+
+\pagestyle{fancy}
+
+\fancyhf{}
+
+% Número de página en la esquina superior derecha
+\fancyhead[R]{\thepage}
+
+% Eliminar línea horizontal del encabezado
+\renewcommand{\headrulewidth}{0pt}
+
+% Estilo de páginas iniciales de capítulos
+\fancypagestyle{plain}{
+    \fancyhf{}
+    \fancyhead[R]{\thepage}
+    \renewcommand{\headrulewidth}{0pt}
+}
+
+% ============================================================
+% 12. FORMATO DE FIGURAS Y TABLAS
+% ============================================================
+
+\captionsetup{
+    font=normalsize,
+    labelfont=bf,
+    justification=raggedright,
+    singlelinecheck=false
+}
+
+% Numeración consecutiva de figuras
+\renewcommand{\thefigure}{\arabic{figure}}
+
+% Numeración consecutiva de tablas
+\renewcommand{\thetable}{\arabic{table}}
+
+% Evitar reiniciar numeración por capítulo
+\counterwithout{figure}{chapter}
+\counterwithout{table}{chapter}
+
+% ============================================================
+% 13. COMANDOS PERSONALIZADOS
+% ============================================================
+
+% Texto para contenido pendiente
+\newcommand{\pendiente}[1]{
+    \textcolor{gris}{
+        \textit{[Pendiente: #1]}
+    }
+}
+
+% Inserción de figuras
+\newcommand{\insertarfigura}[3]{
+    \begin{figure}[htbp]
+        \caption{#2}
+        \label{#3}
+
+        \centering
+
+        \includegraphics[
+            width=.88\textwidth
+        ]{#1}
+    \end{figure}
+}
+
+% ============================================================
+% 14. CONFIGURACIÓN DE FRAGMENTOS DE CÓDIGO
+% ============================================================
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    columns=fullflexible,
+    showstringspaces=false
+}
+
+% ============================================================
+% INICIO DEL DOCUMENTO
+% ============================================================
+
+\begin{document}
+
+% ============================================================
+% 15. PORTADA INSTITUCIONAL
+% ============================================================
+
+\begin{titlepage}
+
+    % Ocultar número de página en la portada
+    \thispagestyle{empty}
+
+    \centering
+
+    \vspace*{0.15cm}
+
+    % Logotipo Universidad del Valle
+    \includegraphics[
+        width=2.5cm
+    ]{imagenes/logo_univalle.jpg}
+
+    \par
+
+    \vspace{0.35cm}
+
+    % Universidad
+    {
+        \normalsize\bfseries
+        UNIVERSIDAD DEL VALLE
+        \par
+    }
+
+    \vspace{0.15cm}
+
+    % Programa académico
+    {
+        \normalsize
+        MAESTRÍA PARA EL DESARROLLO
+        DE APLICACIONES INTELIGENTES
+        \par
+    }
+
+    \vspace{0.65cm}
+
+    % Asignatura
+    {
+        \normalsize
+        TRABAJO INTEGRADOR 3
+        \par
+    }
+
+    \vspace{0.35cm}
+
+    % Nombre del proyecto
+    {
+        \LARGE\bfseries
+        Rhyzome
+        \par
+    }
+
+    \vspace{0.15cm}
+
+    % Subtítulo
+    {
+        \large
+        Generador Procedural de Mapas
+        \par
+    }
+
+    \vspace{0.35cm}
+
+    % Tipo de documento
+    {
+        \normalsize\bfseries
+        Documentación Final del Proyecto
+        \par
+    }
+
+    \vspace{0.75cm}
+
+    % Autor
+    {
+        \normalsize
+        Presentado por:
+        \par
+    }
+
+    {
+        Christian Andres Morales Mera
+        \par
+    }
+
+    \vspace{0.3cm}
+
+    % Asesor
+    {
+        \normalsize
+        Profesor asesor:
+        \par
+    }
+
+    {
+        Deisy Chaves Sanchez
+        \par
+    }
+
+    \vfill
+
+    % Ciudad y año
+    Santiago de Cali, Colombia
+    \par
+
+    \the\year
+
+\end{titlepage}
+
+% ============================================================
+% 16. NUMERACIÓN DEL DOCUMENTO
+% ============================================================
+
+% Numeración arábiga
+\pagenumbering{arabic}
+
+% ============================================================
+% 17. RESUMEN
+% ============================================================
+
+\chapter*{Resumen}
+
+\addcontentsline{toc}{chapter}{Resumen}
+
+{
+    El desarrollo de videojuegos requiere la creación de escenarios que permitan ofrecer experiencias variadas y dinámicas a los jugadores. Sin embargo, el diseño manual de mapas puede representar un proceso complejo y demandante en términos  de tiempo y recursos. Este proyecto presenta \textbf{Rhyzome}, una aplicación web orientada a la generación procedural y a técnicas de aprendizaje automático. La solución implementa los algoritmos Perlin Noise y Autómatas Celulares para generar escenarios correspondientes a bosques, desiertos, ciudades y mazmorras. Adicionalmente, incorpora un componente inteligente basado en modelos de clasificación supervisada, cuyo propósito es evaluar las características de los mapas generados y apoyar su selección según niveles de complejidad. La aplicación utiliza Python y Flask para el procesamiento de mapas y React para la interacción con el usuario. El desarrollo se gestiona mediante la metodología ágil Scrum, incorporando  planificación iterativa, pruebas automatizadas y validación funcional. Como resultado, se dispone de un prototipo web que integra generación procedural, evaluación de características y selección asistida por aprendizaje automático, proporcionando una base tecnológica para la creación y experimentación con escenarios bidimensionales.
+}
+
+\textbf{Palabras clave:}
+generación procedural, videojuegos,
+aprendizaje automático, mapas 2D.
+
+\clearpage
+
+% ============================================================
+% 18. TABLA DE CONTENIDO
+% ============================================================
+
+\tableofcontents
+
+\clearpage
+
+% ============================================================
+% 19. ÍNDICE DE FIGURAS
+% ============================================================
+
+\listoffigures
+
+\addcontentsline{toc}{chapter}{Índice de figuras}
+
+\clearpage
+
+% ============================================================
+% 20. ÍNDICE DE TABLAS
+% ============================================================
+
+\listoftables
+
+\addcontentsline{toc}{chapter}{Índice de tablas}
+
+\clearpage
+
+% ============================================================
+% 21. CAPÍTULOS DEL PROYECTO RHYZOME
+% ============================================================
+
+% Capítulo 1: Información General del Proyecto
+\input{capitulos/01_informacion_general}
+
+% Capítulo 2: Contexto y Justificación
+\input{capitulos/02_contexto_justificacion}
+
+% Capítulo 3: Diseño y Arquitectura de la Solución
+\input{capitulos/03_diseno_arquitectura}
+
+% Capítulo 4: Modelo o Servicio de Inteligencia Artificial
+\input{capitulos/04_modelo_ia}
+
+% Capítulo 5: Gestión Ágil del Proyecto (SCRUM)
+\input{capitulos/05_gestion_agil}
+
+% Capítulo 6: Pruebas y Validación del Sistema
+\input{capitulos/06_pruebas_validacion}
+
+% Capítulo 7: Despliegue y Manuales
+\input{capitulos/07_despliegue_manuales}
+
+% Capítulo 8: Lecciones Aprendidas y Mejora Continua
+\input{capitulos/08_lecciones}
+
+% Capítulo 9: Anexos
+\input{capitulos/09_anexos}
+
+% ============================================================
+% 22. REFERENCIAS BIBLIOGRÁFICAS
+% ============================================================
+
+\clearpage
+
+\printbibliography[
+    title={Referencias}
+]
+
+% ============================================================
+% FIN DEL DOCUMENTO
+% ============================================================
+
+\end{document}

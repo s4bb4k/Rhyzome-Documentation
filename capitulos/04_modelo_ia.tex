@@ -1,0 +1,24 @@
+\chapter{Modelo o Servicio de Inteligencia Artificial}
+\label{cap:04_modelo_ia}
+Este capítulo describe el enfoque de clasificación supervisada y establece la documentación experimental necesaria para justificar la selección de los modelos incorporados al prototipo.
+\section{Tipo de modelo o servicio utilizado}
+El componente inteligente clasifica mapas según tres niveles de complejidad: bajo, medio y alto. No genera directamente las matrices de terreno. Los clasificadores considerados durante el desarrollo incluyen Random Forest, máquinas de vectores de soporte (SVM) y perceptrón multicapa (MLP), mediante scikit-learn \parencite{pedregosa2011}. La lista definitiva de modelos evaluados deberá corresponder al manifiesto experimental.
+\section{Dataset: fuente, características y preprocesamiento}
+Las muestras representan mapas bidimensionales mediante características estructurales, entre ellas la proporción transitable, cantidad de regiones conectadas, proporción de la región mayor, densidad de bordes y entropía por filas y columnas. Las etiquetas de complejidad deben conservar la misma codificación durante entrenamiento e inferencia.
+\pendiente{Confirmar tamaño y distribución definitiva del dataset, procedencia y licencias de mapas externos, procedimiento de etiquetado, particiones y transformaciones empleadas.}
+\section{Entrenamiento: algoritmos y parámetros}
+El entrenamiento se realiza independientemente de las solicitudes de generación. Los modelos deben evaluarse sobre particiones comparables, con transformaciones ajustadas exclusivamente sobre los datos de entrenamiento. Registrar hiperparámetros, semillas y versiones de bibliotecas permite reproducir los experimentos.
+\pendiente{Incorporar configuración y resultados reales del notebook definitivo.}
+\section{Métricas de evaluación}
+La evaluación de la clasificación puede documentarse mediante exactitud, precisión, sensibilidad y F1 por clase, además de una matriz de confusión. La agregación macro permite asignar el mismo peso a cada clase. Estas métricas de clasificación se distinguen de las métricas estructurales de los mapas.
+\pendiente{Registrar las métricas efectivamente utilizadas y sus valores experimentales.}
+\section{Validación cruzada}
+La validación cruzada permite estimar la variabilidad del desempeño entre particiones. La evaluación con mapas externos constituye una comprobación adicional de generalización y no equivale por sí sola a validación cruzada. Se debe evitar que mapas relacionados o duplicados aparezcan simultáneamente en entrenamiento y evaluación.
+\pendiente{Documentar número de particiones, estrategia, semillas y resultados reales.}
+\section{Desempeño y justificación de selección}
+La selección debe justificarse por familia de generador, considerando el desempeño de clasificación y las condiciones de inferencia en producción.
+\pendiente{Agregar tabla comparativa, clasificadores ganadores y evidencia experimental definitiva.}
+\section{Integración con la aplicación}
+Los artefactos entrenados se incorporan al backend según la estrategia descrita en la Sección~\ref{subsec:gestion_modelos_produccion}. La compatibilidad de características, clases y versiones de dependencias es necesaria para reproducir el comportamiento durante la inferencia.
+\section{Consideraciones éticas y sesgo algorítmico}
+La complejidad estimada depende de las características estructurales y del criterio de etiquetado; no equivale necesariamente a dificultad percibida por un jugador. Las diferencias entre mapas procedurales y externos pueden afectar la generalización. Se deben documentar las licencias de los datos, las limitaciones del modelo y evitar atribuir al clasificador garantías de jugabilidad no verificadas.
