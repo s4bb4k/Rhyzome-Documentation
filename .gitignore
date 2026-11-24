@@ -1,0 +1,69 @@
+# ==========================================
+# RHYZOME - Informe final de trabajo de grado
+# ==========================================
+
+# Directorios de compilación
+build/
+out/
+output/
+
+# Archivos auxiliares de LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.dvi
+*.xdv
+*.nav
+*.snm
+*.vrb
+
+# Bibliografía - BibLaTeX / Biber
+*.bbl
+*.bcf
+*.blg
+*.run.xml
+
+# Sincronización entre código y PDF
+*.synctex
+*.synctex.gz
+*.synctex(busy)
+
+# Archivos temporales de TeXstudio
+*.tex~
+*.bib~
+*.backup
+*.bak
+*.tmp
+*.txss
+*.txsprofile
+*.txsproject
+*.autosave
+
+# Archivos temporales de editores
+*~
+*.swp
+*.swo
+
+# Visual Studio Code
+.vscode/
+
+# Configuraciones de IntelliJ
+.idea/
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Documento PDF generado
+/main.pdf
+
+# Archivos comprimidos de respaldo
+/*.zip
+/*.rar
+/*.7z
