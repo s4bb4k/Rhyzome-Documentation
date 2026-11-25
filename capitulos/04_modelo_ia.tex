@@ -1,24 +1,617 @@
+% ============================================================
+% CAPÍTULO 4 — RHYZOME
+% ============================================================
 \chapter{Modelo o Servicio de Inteligencia Artificial}
 \label{cap:04_modelo_ia}
-Este capítulo describe el enfoque de clasificación supervisada y establece la documentación experimental necesaria para justificar la selección de los modelos incorporados al prototipo.
+
+La incorporación de técnicas de aprendizaje automático en Rhyzome permite complementar la generación procedural de mapas mediante la clasificación de sus propiedades estructurales. El componente inteligente estima el nivel de complejidad de los escenarios y apoya la selección de candidatos de acuerdo con la solicitud del usuario, sin sustituir los algoritmos responsables de construir los mapas.
+
+La documentación distingue el estudio de clasificadores especializados por familia procedural, el entrenamiento del clasificador V2 registrado en el backend y la evaluación de la generación adaptativa mediante inferencia sin reentrenamiento. Estas actividades se describen por separado para evitar confundir sus resultados. La correspondencia con la numeración histórica de los experimentos se encuentra pendiente de confirmación.
+
+% ============================================================
+% 4.1 TIPO DE MODELO O SERVICIO UTILIZADO
+% ============================================================
+
 \section{Tipo de modelo o servicio utilizado}
-El componente inteligente clasifica mapas según tres niveles de complejidad: bajo, medio y alto. No genera directamente las matrices de terreno. Los clasificadores considerados durante el desarrollo incluyen Random Forest, máquinas de vectores de soporte (SVM) y perceptrón multicapa (MLP), mediante scikit-learn \parencite{pedregosa2011}. La lista definitiva de modelos evaluados deberá corresponder al manifiesto experimental.
+\label{sec:tipo_modelo_ia}
+
+
+El componente inteligente de Rhyzome se fundamenta en técnicas de aprendizaje automático supervisado, orientadas a la clasificación de la complejidad estructural de mapas bidimensionales. Su incorporación permite complementar los algoritmos de generación procedural mediante un mecanismo de evaluación basado en las características de los escenarios generados.
+
+
+% ============================================================
+% 4.1.1 ENFOQUE DE APRENDIZAJE AUTOMÁTICO
+% ============================================================
+
+\subsection{Enfoque de aprendizaje automático}
+\label{subsec:enfoque_aprendizaje}
+
+El aprendizaje supervisado constituye un enfoque de aprendizaje automático en el cual los modelos se entrenan utilizando ejemplos
+previamente etiquetados, con el propósito de establecer relaciones entre las variables de entrada y una variable objetivo. Cuando
+esta última corresponde a categorías discretas, el problema se aborda mediante técnicas de clasificación \parencite{james2023}.
+En Rhyzome, este enfoque se aplica a un problema de clasificación multiclase, en el cual las variables de entrada representan
+propiedades cuantificables de los mapas bidimensionales, mientras que la variable objetivo corresponde a uno de los tres niveles
+de complejidad estructural definidos: bajo, medio y alto.
+
+La elección de este enfoque responde a la necesidad de utilizar las características estructurales de los mapas como criterio
+para estimar su complejidad y apoyar la selección de escenarios acordes con las condiciones establecidas por el usuario. Para
+su implementación se utiliza la biblioteca scikit-learn, que proporciona herramientas para el entrenamiento, evaluación y
+utilización de modelos de aprendizaje automático \parencite{pedregosa2011}.
+
+La Figura~\ref{fig:enfoque_clasificacion} presenta el flujo conceptual utilizado para transformar un mapa procedural en
+una predicción de complejidad estructural, mediante la extracción de características y su procesamiento a través de un modelo de clasificación previamente entrenado.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[
+	width=0.85\textwidth,
+	height=0.65\textheight,
+	keepaspectratio
+	]{imagenes/enfoque_clasificacion.png}
+	\caption{Enfoque de clasificación supervisada
+		de mapas en Rhyzome}
+	\label{fig:enfoque_clasificacion}
+\end{figure}
+
+\FloatBarrier
+
+Como se observa en la Figura~\ref{fig:enfoque_clasificacion}, el modelo de aprendizaje automático no interviene directamente en la construcción de las matrices de terreno. Su función consiste en analizar las características extraídas de los mapas generados y estimar su nivel de complejidad estructural. Esta separación permite mantener responsabilidades diferenciadas entre la generación procedural y la clasificación supervisada, conservando los algoritmos responsables de la construcción de los mapas y proporcionando información al mecanismo de selección adaptativa descrito en la Sección~\ref{sec:integracion_ia}.
+
+% ============================================================
+% 4.1.2 FORMULACIÓN DEL PROBLEMA DE CLASIFICACIÓN
+% ============================================================
+
+\subsection{Formulación del problema de clasificación}
+\label{subsec:formulacion_clasificacion}
+
+La clasificación de la complejidad estructural en Rhyzome se formula como un problema de aprendizaje supervisado multiclase, en el cual las propiedades cuantificables de un mapa constituyen las variables de entrada del modelo y el nivel de complejidad representa la variable objetivo.
+
+Cada mapa se representa mediante un vector de características:
+
+\begin{equation}
+	\mathbf{x}=(x_1,x_2,\ldots,x_d)
+	\label{eq:vector_caracteristicas}
+\end{equation}
+
+donde $d$ corresponde al número de características de entrada y cada $x_i$ representa una propiedad cuantificable del mapa, como la proporción de espacios transitables, la cantidad de regiones conectadas, la densidad de bordes o la entropía. Estas características permiten representar numéricamente la estructura del escenario generado.
+
+El conjunto de clases de complejidad se define como:
+
+\begin{equation}
+	\mathcal{C}=\{\text{bajo},\text{medio},\text{alto}\}.
+	\label{eq:clases_complejidad}
+\end{equation}
+
+A partir del vector de características, el modelo establece una relación entre las propiedades estructurales del mapa y las clases de complejidad definidas. La predicción se expresa mediante:
+
+\begin{equation}
+	\hat{y}=f_{\theta}(\mathbf{x}),\qquad f_{\theta}:\mathbb{R}^{d}\rightarrow\mathcal{C}.
+	\label{eq:prediccion_complejidad}
+\end{equation}
+
+En esta expresión, $f_{\theta}$ representa la función de clasificación, $\theta$ corresponde a los parámetros aprendidos durante el entrenamiento y $\hat{y}$ representa la clase predicha para el mapa evaluado.
+
+La dimensionalidad del vector de entrada depende de la configuración experimental utilizada. En el estudio de clasificadores especializados por familia de generación procedural se utilizaron diez características ($d=10$), mientras que la configuración experimental V2 emplea ocho características ($d=8$).
+
+La clasificación obtenida representa una estimación de la complejidad estructural del mapa y no equivale necesariamente a la dificultad percibida por un jugador, debido a que esta última puede depender de factores adicionales, como las mecánicas del videojuego, los objetivos y las habilidades del usuario. La predicción obtenida proporciona información al mecanismo de selección adaptativa de candidatos descrito en la Sección~\ref{sec:integracion_ia}.
+
+% ============================================================
+% 4.1.3 MODELOS DE CLASIFICACIÓN CONSIDERADOS
+% ============================================================
+
+\subsection{Modelos de clasificación considerados}
+\label{subsec:modelos_considerados}
+
+Para abordar el problema de clasificación de la complejidad estructural de mapas bidimensionales, se evaluaron seis algoritmos de aprendizaje supervisado pertenecientes a diferentes familias de modelos. La selección de estos clasificadores permitió establecer una comparación experimental entre enfoques lineales, métodos basados en instancias, ensambles de árboles de decisión, máquinas de vectores de soporte y redes neuronales artificiales.
+
+La diversidad de los algoritmos considerados responde a la necesidad de evaluar diferentes mecanismos de aprendizaje, teniendo en cuenta que las relaciones entre las características estructurales de los mapas y sus niveles de complejidad pueden presentar comportamientos tanto lineales como no lineales. A continuación, se describen los fundamentos de los modelos
+evaluados y su pertinencia dentro del contexto de Rhyzome.
+
+\textbf{Regresión Logística (LR).}
+Es un algoritmo de clasificación que permite estimar la probabilidad de pertenencia de una observación a una determinada clase mediante una función basada en la combinación de las variables de entrada \parencite{james2023}. Su incorporación permite establecer una línea base de comparación mediante un modelo relativamente sencillo e interpretable, evaluando si las características estructurales de los mapas permiten diferenciar los niveles de complejidad mediante fronteras de decisión lineales.
+
+\textbf{K-Nearest Neighbors (KNN).}
+Es un algoritmo basado en instancias que realiza la clasificación de una observación a partir de las clases correspondientes a sus vecinos más próximos, identificados mediante medidas de distancia o similitud dentro del espacio de características \parencite{cunningham2021}. En Rhyzome, su consideración permite evaluar si los mapas con propiedades estructurales similares tienden a pertenecer a una misma categoría de complejidad.
+
+\textbf{Random Forest (RF).}
+Es un método de aprendizaje basado en un conjunto de árboles de decisión construidos mediante mecanismos de aleatoriedad, cuyas predicciones se combinan para obtener una clasificación \parencite{breiman2001}. Su incorporación permite evaluar relaciones no lineales e interacciones entre las características estructurales de los mapas, reduciendo la dependencia de un único árbol de decisión.
+
+\textbf{Máquinas de vectores de soporte (SVM).}
+Son modelos de aprendizaje supervisado orientados a establecer fronteras de decisión que maximicen el margen de separación entre clases \parencite{cortes1995}. Mediante el uso de una función kernel de base radial (RBF), es posible representar fronteras de decisión no lineales. Su consideración permite evaluar la capacidad de separación de los niveles de complejidad dentro del espacio de características estructurales.
+
+\textbf{Gradient Boosting (GB).}
+Es una técnica de aprendizaje basada en la construcción secuencial de modelos, en la cual cada nuevo estimador contribuye a mejorar el desempeño del conjunto mediante la optimización de una función de pérdida \parencite{friedman2001}. Su incorporación permite evaluar la capacidad de un ensamble secuencial para identificar patrones asociados con las diferentes categorías de complejidad estructural.
+
+\textbf{Perceptrón multicapa (MLP).}
+Es un modelo de red neuronal artificial compuesto por una capa de entrada, una o más capas ocultas y una capa de salida. Mediante funciones de activación no lineales y el ajuste de los pesos durante el entrenamiento, este modelo permite representar relaciones complejas entre las variables de entrada \parencite{goodfellow2016}. Su consideración en Rhyzome permite evaluar la capacidad de las redes neuronales para identificar relaciones no lineales e interacciones entre las características estructurales de los mapas.
+
+La Tabla~\ref{tab:modelos_considerados} sintetiza los fundamentos de los seis clasificadores evaluados y la justificación de su incorporación dentro del proceso experimental de Rhyzome.
+
+\begin{table}[htbp]
+	\centering
+	
+	\caption{Modelos de clasificación considerados}
+	\label{tab:modelos_considerados}
+	
+	\renewcommand{\arraystretch}{1.5}
+	
+	\begin{tabularx}{\textwidth}{
+			|>{\raggedright\arraybackslash}p{3.5cm}|
+			>{\raggedright\arraybackslash}X|
+			>{\raggedright\arraybackslash}X|
+		}
+		
+		\hline
+		
+		\rowcolor{gray!15}
+		\textbf{Modelo} &
+		\textbf{Fundamento} &
+		\textbf{Justificación} \\
+		
+		\hline
+		
+		Regresión Logística (LR) &
+		Clasificación probabilística mediante
+		fronteras de decisión lineales. &
+		Establecer una línea base interpretable
+		para la comparación experimental. \\
+		
+		\hline
+		
+		KNN &
+		Clasificación basada en la proximidad
+		entre observaciones. &
+		Evaluar la similitud estructural
+		entre mapas. \\
+		
+		\hline
+		
+		Random Forest (RF) &
+		Ensamble de árboles de decisión
+		construidos mediante aleatoriedad. &
+		Identificar relaciones no lineales
+		e interacciones entre características. \\
+		
+		\hline
+		
+		SVM (RBF) &
+		Fronteras de máximo margen mediante
+		una función kernel de base radial. &
+		Evaluar la separación no lineal
+		de los niveles de complejidad. \\
+		
+		\hline
+		
+		Gradient Boosting (GB) &
+		Construcción secuencial de estimadores
+		mediante optimización de una función
+		de pérdida. &
+		Evaluar el aprendizaje progresivo
+		de patrones estructurales. \\
+		
+		\hline
+		
+		Perceptrón multicapa (MLP) &
+		Red neuronal artificial con múltiples
+		capas y funciones de activación. &
+		Evaluar interacciones complejas
+		entre las variables de entrada. \\
+		
+		\hline
+		
+	\end{tabularx}
+\end{table}
+
+\FloatBarrier
+
+La evaluación de estos seis clasificadores permite comparar diferentes estrategias de aprendizaje automático sin asumir previamente la superioridad de un algoritmo sobre los demás. La selección de los modelos se fundamenta en los resultados obtenidos durante el proceso experimental, considerando su capacidad para clasificar los niveles de complejidad estructural de los mapas.
+
+Es importante distinguir entre los modelos considerados durante la experimentación y aquellos seleccionados para su integración en el prototipo. La configuración de entrenamiento, las métricas de evaluación y los resultados comparativos se presentan en las secciones posteriores de este capítulo, donde se establecen los criterios utilizados para justificar la selección de los modelos.
+
+
+% ============================================================
+% 4.2 DATASET: FUENTE, CARACTERÍSTICAS Y PREPROCESAMIENTO
+% ============================================================
+
 \section{Dataset: fuente, características y preprocesamiento}
-Las muestras representan mapas bidimensionales mediante características estructurales, entre ellas la proporción transitable, cantidad de regiones conectadas, proporción de la región mayor, densidad de bordes y entropía por filas y columnas. Las etiquetas de complejidad deben conservar la misma codificación durante entrenamiento e inferencia.
-\pendiente{Confirmar tamaño y distribución definitiva del dataset, procedencia y licencias de mapas externos, procedimiento de etiquetado, particiones y transformaciones empleadas.}
+\label{sec:dataset_ia}
+
+La construcción del conjunto de datos constituye una etapa fundamental para el desarrollo del componente de aprendizaje automático de Rhyzome, debido a que las características estructurales de los mapas proporcionan la información necesaria para el entrenamiento y la evaluación de los modelos de clasificación.
+
+La estrategia experimental contempla la generación de datos sintéticos mediante los algoritmos de generación procedural implementados en el proyecto, complementada con una fuente externa de niveles de videojuegos destinada a la evaluación de los clasificadores sobre estructuras diferentes a las generadas por Rhyzome.
+
+% ============================================================
+% 4.2.1 ORIGEN Y CONSTRUCCIÓN DEL DATASET
+% ============================================================
+
+\subsection{Origen y construcción del dataset}
+\label{subsec:origen_dataset}
+
+\textbf{Generación del conjunto de datos sintéticos.}
+
+El conjunto de datos sintéticos se construyó mediante la generación de mapas bidimensionales utilizando los algoritmos Perlin Noise \parencite{perlin1985} y Autómatas Celulares \parencite{johnson2010}. La utilización de estos algoritmos permite obtener diferentes configuraciones estructurales a partir de la modificación de sus parámetros de generación, conservando la posibilidad de reproducir los escenarios mediante semillas.
+
+En el estudio experimental de 10.000 mapas se estableció una distribución uniforme entre los cuatro tipos de terreno considerados en Rhyzome: bosque, desierto, ciudad y mazmorra. Cada tipo de terreno cuenta con 2.500 muestras, permitiendo incorporar diferentes configuraciones estructurales dentro del conjunto de datos.
+
+La Tabla~\ref{tab:distribucion_dataset_sintetico} presenta la distribución de los mapas sintéticos según el tipo de terreno y el algoritmo de generación procedural utilizado.
+
+\begin{table}[htbp]
+	\centering
+	
+	\caption{Distribución del conjunto de datos sintéticos}
+	\label{tab:distribucion_dataset_sintetico}
+	
+	\renewcommand{\arraystretch}{1.5}
+	
+	\begin{tabularx}{\textwidth}{
+			|>{\raggedright\arraybackslash}X|
+			>{\raggedright\arraybackslash}X|
+			>{\centering\arraybackslash}p{2.3cm}|
+			>{\centering\arraybackslash}p{2.3cm}|
+		}
+		
+		\hline
+		
+		\rowcolor{gray!15}
+		\textbf{Terreno} &
+		\textbf{Algoritmo} &
+		\textbf{Cantidad} &
+		\textbf{Porcentaje} \\
+		
+		\hline
+		
+		Bosque &
+		Perlin Noise &
+		2.500 &
+		25\% \\ \hline
+		
+		Desierto &
+		Perlin Noise &
+		2.500 &
+		25\% \\ \hline
+		
+		Ciudad &
+		Perlin Noise &
+		2.500 &
+		25\% \\ \hline
+		
+		Mazmorra &
+		Autómatas Celulares &
+		2.500 &
+		25\% \\ \hline
+		
+		\rowcolor{gray!10}
+		\textbf{Total} &
+		--- &
+		\textbf{10.000} &
+		\textbf{100\%} \\
+		
+		\hline
+		
+	\end{tabularx}
+\end{table}
+
+\FloatBarrier
+
+Como se observa en la Tabla~\ref{tab:distribucion_dataset_sintetico}, el algoritmo Perlin Noise representa el 75\% del conjunto de datos, mientras que Autómatas Celulares representa el 25\% restante. Esta distribución se deriva de la asociación de los algoritmos con los tipos de terreno definidos en Rhyzome y no implica necesariamente una distribución uniforme entre las clases de complejidad estructural.
+
+Las dimensiones de los mapas se seleccionan de manera independiente para el ancho y el alto, utilizando valores comprendidos entre 24 y 100 celdas, en incrementos de cuatro. Esta variación permite incorporar escenarios con diferentes dimensiones dentro del conjunto de datos experimental.
+
+Para favorecer la reproducibilidad del proceso de generación se utilizan tres bases de semillas: 420000, 1230000 y 20260000. Adicionalmente, los perfiles de generación contemplan variaciones en los parámetros de Perlin Noise y Autómatas Celulares según el nivel de complejidad solicitado, con el propósito de obtener diferentes configuraciones de espacios transitables, obstáculos y regiones conectadas.
+
+\textbf{Incorporación de datos externos.}
+
+Como fuente complementaria de información se considera The Video Game Level Corpus (VGLC), un repositorio académico que proporciona representaciones de niveles de videojuegos en formatos adecuados para su procesamiento computacional y su utilización en investigaciones relacionadas con inteligencia artificial y generación procedural de contenido \parencite{summerville2016}.
+
+El repositorio oficial se encuentra disponible públicamente a través de GitHub:
+
+\begin{center}
+	\url{https://github.com/TheVGLC/TheVGLC}
+\end{center}
+
+El protocolo experimental contempla la extracción de hasta 200 ventanas externas con dimensiones de $32 \times 32$ celdas, destinadas a evaluar el comportamiento de los clasificadores frente a estructuras que no proceden directamente de los algoritmos de generación procedural de Rhyzome.
+
+Estas muestras se mantienen separadas del conjunto de datos sintéticos utilizado para el entrenamiento, con el propósito de disponer de una fuente externa para analizar el comportamiento de los modelos ante estructuras diferentes de aquellas consideradas durante su aprendizaje.
+
+El repositorio declara una licencia MIT. No obstante, los derechos asociados a los videojuegos originales deben considerarse de manera independiente, por lo que el uso del corpus en el proyecto se circunscribe al contexto académico y experimental.
+
+% FUENTE: celdas de generación y carga de mapas, CSV y manifiesto.
+% Explicar mapas sintéticos, algoritmos, dimensiones, semillas, parámetros y mapas externos.
+% Identificar repositorios, versiones, licencias y papel de cada fuente: entrenamiento o evaluación.
+El notebook de 10.000 mapas construye muestras sintéticas de bosque, desierto, ciudad y mazmorra, con 2.500 mapas por tipo. Las dimensiones se muestrean independientemente entre 24 y 100 celdas, en incrementos de cuatro. Se utilizan tres bases de semillas (420000, 1230000 y 20260000). Los perfiles generativos varían parámetros de Perlin Noise y Autómatas Celulares según la complejidad solicitada. El notebook contempla además hasta 200 ventanas externas de 32 celdas por lado procedentes de The Video Game Level Corpus (VGLC), separadas del entrenamiento procedural.
+\pendiente{Confirmar versión y licencia de VGLC, conteo externo efectivo y procedencia del experimento histórico.}
+
+\subsection{Características estructurales de los mapas}
+Las características representan propiedades de la distribución espacial de las celdas y de las regiones transitables. Su definición debe ser consistente entre entrenamiento e inferencia.
+% FUENTE: feature_config.json, extractor del notebook y ml_adapter.py.
+% Confirmar nombres, orden, fórmulas, rangos, conectividad de 4 u 8 vecinos y codificación de celdas.
+% No incluir métricas que no sean entradas reales del modelo.
+\begin{table}[htbp]
+	\centering
+	\caption{Características de entrada del clasificador}
+	\label{tab:caracteristicas_ia}
+	\renewcommand{\arraystretch}{1.5}
+	\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{4cm}|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}p{2.5cm}|}
+		\hline
+		\rowcolor{gray!15} \textbf{Característica} & \textbf{Definición y cálculo} & \textbf{Rango} \\ \hline
+		\texttt{width} & Ancho & 24--100 \\ \hline
+		\texttt{height} & Alto & 24--100 \\ \hline
+		\texttt{floor\_ratio} & Proporción transitable & 0--1 \\ \hline
+		\texttt{n\_regions} & Cantidad de regiones & Entero \\ \hline
+		\texttt{largest\_region\_ratio} & Proporción de región mayor & 0--1 \\ \hline
+		\texttt{edge\_density} & Densidad de bordes & Por verificar \\ \hline
+		\texttt{row\_entropy} & Entropía por filas & Por verificar \\ \hline
+		\texttt{col\_entropy} & Entropía por columnas & Por verificar \\ \hline
+		\texttt{local\_variance} & Variación local & Por verificar \\ \hline
+		\texttt{perimeter\_area\_ratio} & Relación perímetro y área & Por verificar \\ \hline
+	\end{tabularx}
+\end{table}
+\FloatBarrier
+El contrato exportado contiene las diez variables en el orden presentado. V2 excluye ancho y alto. \pendiente{Precisar fórmulas, denominadores y rangos según los extractores.}
+
+\subsection{Etiquetado de los niveles de complejidad}
+% Explicar cómo se obtuvieron las etiquetas: reglas, umbrales, expertos u otro procedimiento real.
+% Si las etiquetas derivan de las mismas características de entrada, discutir circularidad y alcance.
+% Confirmar codificación numérica y mostrar ejemplos de las tres clases.
+La variable objetivo del notebook es \texttt{complexity\_requested}, asignada según el perfil generativo solicitado. Como auditoría adicional se calcula un índice estructural mediante normalización robusta entre percentiles 5 y 95 de seis indicadores y su promedio escalado a 100. Los terciles del índice definen una complejidad observada auxiliar, que no sustituye la etiqueta de entrenamiento. El contrato exportado por familia codifica alto=0, bajo=1 y medio=2; V2 utiliza bajo=0, medio=1 y alto=2. Estas codificaciones no son intercambiables.
+\pendiente{Incorporar umbrales y coincidencia observada registrados en las salidas del notebook.}
+
+\subsection{Distribución y composición del dataset}
+% FUENTE: CSV definitivo y conteos del notebook; distinguir mapas generados de muestras válidas.
+% GRÁFICA: barras por clase y familia procedural; indicar fuente y total.
+\begin{table}[htbp]
+	\centering
+	\caption{Distribución de muestras por familia y complejidad}
+	\label{tab:distribucion_dataset}
+	\renewcommand{\arraystretch}{1.5}
+	\begin{tabularx}{\textwidth}{|X|c|c|c|c|}
+		\hline
+		\rowcolor{gray!15} \textbf{Familia} & \textbf{Bajo} & \textbf{Medio} & \textbf{Alto} & \textbf{Total} \\ \hline
+		Perlin Noise & 2500 & 2500 & 2500 & 7500 \\ \hline
+		Autómatas Celulares & 834 & 833 & 833 & 2500 \\ \hline
+		Total & 3334 & 3333 & 3333 & 10000 \\ \hline
+	\end{tabularx}
+\end{table}
+\FloatBarrier
+% Si hay datos externos, indicar sus conteos por separado y si forman parte del entrenamiento.
+La distribución por clase es prácticamente equilibrada, aunque Perlin Noise representa el 75\% de las muestras. Los mapas externos no se suman al conjunto de entrenamiento.
+
+\subsection{Preprocesamiento y partición de los datos}
+% Documentar limpieza, duplicados, valores faltantes, escalado, particiones, estratificación y semillas.
+% Verificar que las transformaciones se ajustaron solo con entrenamiento y que no hubo fuga de datos.
+El notebook verifica valores finitos y etiquetas válidas. Utiliza particiones estratificadas 80/20 y escalado mediante \texttt{StandardScaler} dentro de pipelines para Regresión Logística, KNN, SVM y MLP. V2 registra 6.988 muestras de entrenamiento, 1.500 de validación y 1.512 de prueba. \pendiente{Verificar controles de duplicados y separación por semillas en ambos protocolos.}
+
+% ============================================================
 \section{Entrenamiento: algoritmos y parámetros}
-El entrenamiento se realiza independientemente de las solicitudes de generación. Los modelos deben evaluarse sobre particiones comparables, con transformaciones ajustadas exclusivamente sobre los datos de entrenamiento. Registrar hiperparámetros, semillas y versiones de bibliotecas permite reproducir los experimentos.
-\pendiente{Incorporar configuración y resultados reales del notebook definitivo.}
+\label{sec:entrenamiento_ia}
+\subsection{Diseño de la experimentación}
+El entrenamiento se realiza fuera del entorno de producción. La comparación de clasificadores busca identificar modelos adecuados para las familias de generación procedural contempladas por Rhyzome.
+% AGREGAR: objetivo experimental, protocolo, variables, condiciones de comparación y criterio de selección.
+% FIGURA: flujo experimental desde dataset hasta artefactos seleccionados.
+El estudio por familia compara seis clasificadores con semillas 42, 123 y 2026 y cinco particiones estratificadas. La selección se basa en el F1 macro promedio de validación cruzada, con ROC-AUC e inferencia como criterios secundarios.
+
+\subsection{Entrenamiento y comparación de modelos por familia}
+% Explicar ejecución paso a paso: carga, extracción, etiquetas, partición, entrenamiento y evaluación.
+% Confirmar si se entrenaron modelos independientes por familia y cómo se compararon.
+% Los resultados numéricos se presentan en la Sección 4.6, no duplicarlos aquí.
+Se construyen los vectores de entrada, se codifica la complejidad solicitada y se realizan comparaciones globales y por familia. Para cada semilla se ajustan los clasificadores y se evalúan sobre la partición de prueba. Los artefactos seleccionados por familia se exportan con semilla 42. \pendiente{Incorporar el experimento histórico y confirmar la denominación oficial de cada etapa.}
+
+\subsection{Configuración de hiperparámetros}
+% Distinguir hiperparámetros fijos, búsqueda de hiperparámetros y parámetros aprendidos.
+% No afirmar GridSearchCV ni optimización si no aparecen en el notebook.
+\begin{table}[htbp]
+	\centering
+	\caption{Configuración de los clasificadores evaluados}
+	\label{tab:hiperparametros_ia}
+	\renewcommand{\arraystretch}{1.5}
+	\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{3.5cm}|X|X|}
+		\hline
+		\rowcolor{gray!15} \textbf{Modelo} & \textbf{Hiperparámetros} & \textbf{Valores utilizados} \\ \hline
+		Regresión Logística & Iteraciones máximas; pesos & 2000; balanceados \\ \hline
+		KNN & Vecinos; pesos & 7; distancia \\ \hline
+		Random Forest & Árboles; pesos & 300; balanceados \\ \hline
+		SVM (RBF) & C; probabilidades; pesos & 2; activadas; balanceados \\ \hline
+		Gradient Boosting & Estimadores; tasa; profundidad & 150; 0,05; 3 \\ \hline
+		MLP & Capas; iteraciones; parada temprana & 64 y 32; 1000; activada \\ \hline
+	\end{tabularx}
+\end{table}
+\FloatBarrier
+La tabla corresponde al constructor de modelos del notebook de 10.000 mapas. % Verificar por separado hiperparámetros V2.
+
+\subsection{Reproducibilidad del entrenamiento}
+% Registrar Python, scikit-learn, NumPy, semillas, notebook, versión del dataset y commit si existe.
+% Diferenciar versiones del entorno experimental de las del backend.
+El manifiesto registra Python 3.13.15, scikit-learn 1.6.1, Joblib 1.6.0, NumPy 2.1.3 y pandas 2.2.3. Incluye hashes SHA-256 de los dos artefactos especializados. \pendiente{Confirmar versiones efectivas del despliegue y compatibilidad de serialización.}
+
+% ============================================================
 \section{Métricas de evaluación}
-La evaluación de la clasificación puede documentarse mediante exactitud, precisión, sensibilidad y F1 por clase, además de una matriz de confusión. La agregación macro permite asignar el mismo peso a cada clase. Estas métricas de clasificación se distinguen de las métricas estructurales de los mapas.
-\pendiente{Registrar las métricas efectivamente utilizadas y sus valores experimentales.}
+\label{sec:metricas_ia}
+\subsection{Métricas de clasificación}
+% Conservar únicamente las métricas efectivamente utilizadas; agregar referencias bibliográficas.
+La evaluación de un clasificador multiclase puede realizarse mediante exactitud, precisión, sensibilidad y puntuación F1. Para una clase determinada, $VP$, $FP$ y $FN$ representan verdaderos positivos, falsos positivos y falsos negativos, respectivamente.
+\begin{equation}
+	\mathrm{Accuracy}=\frac{\sum_{i=1}^{N}\mathbf{1}(y_i=\hat{y}_i)}{N}
+\end{equation}
+\begin{equation}
+	P=\frac{VP}{VP+FP},\qquad R=\frac{VP}{VP+FN}
+\end{equation}
+\begin{equation}
+	F_1=\frac{2PR}{P+R},\qquad F_{1,\mathrm{macro}}=\frac{1}{K}\sum_{k=1}^{K}F_{1,k}
+\end{equation}
+Aquí $N$ representa el número de muestras evaluadas y $K$ el número de clases. El promedio macro asigna el mismo peso a cada clase.
+% Confirmar tratamiento de denominadores cero y tipo de promedio realmente usado.
+Además de estas métricas se reportan exactitud balanceada y ROC-AUC multiclase One-vs-Rest. El criterio principal del estudio por familia es F1 macro de validación cruzada.
+
+\subsection{Matrices de confusión}
+% Incorporar matrices reales, preferiblemente de los modelos seleccionados por familia.
+% Indicar partición, orden de clases, ejes real/predicho y si son conteos o porcentajes.
+% Analizar confusiones entre clases, no limitarse a insertar imágenes.
+Para V2, la matriz de prueba registrada, con filas reales y columnas predichas en orden bajo, medio y alto, es:\begin{equation}\begin{pmatrix}493&11&0\\9&490&5\\0&4&500\end{pmatrix}\end{equation} Se observan 29 errores en 1.512 muestras, principalmente entre clases adyacentes. \pendiente{Incorporar matrices de los clasificadores especializados.}
+
+\subsection{Métricas estructurales de los mapas}
+Las métricas estructurales describen propiedades de los escenarios y se distinguen de las métricas de desempeño de clasificación.
+% Confirmar conectividad, accesibilidad, densidad de obstáculos y demás indicadores implementados.
+% Explicar su función en el evaluación adaptativa y diferenciar métricas de entrada y salida.
+\pendiente{Documentar las métricas estructurales utilizadas y sus definiciones verificadas.}
+
+% ============================================================
 \section{Validación cruzada}
-La validación cruzada permite estimar la variabilidad del desempeño entre particiones. La evaluación con mapas externos constituye una comprobación adicional de generalización y no equivale por sí sola a validación cruzada. Se debe evitar que mapas relacionados o duplicados aparezcan simultáneamente en entrenamiento y evaluación.
-\pendiente{Documentar número de particiones, estrategia, semillas y resultados reales.}
+\label{sec:validacion_cruzada_ia}
+\subsection{Estrategia de validación experimental}
+% Verificar si hubo K-fold, StratifiedKFold, holdout u otro procedimiento.
+% Si no hubo validación cruzada, declararlo expresamente; no presentar holdout como K-fold.
+% Si existe K-fold, registrar k, semillas, media, desviación estándar y separación por grupos si aplica.
+El estudio por familia utiliza Stratified K-Fold con cinco particiones, barajado y semillas 42, 123 y 2026. El registro V2 presenta una partición de validación independiente; no debe describirse como validación cruzada sin evidencia adicional.
+
+\subsection{Evaluación con mapas externos}
+La evaluación con mapas externos permite examinar el comportamiento del clasificador ante escenarios de procedencia diferente. Este procedimiento no equivale por sí mismo a validación cruzada.
+% Identificar fuentes, licencias, conversión a matrices, etiquetas y resultados.
+% Confirmar que los mapas de evaluación no participaron en el entrenamiento.
+% Si no existen etiquetas independientes, no presentar coincidencias como exactitud externa.
+\pendiente{Incorporar el protocolo y resultados reales de evaluación externa, si se ejecutó.}
+
+\subsection{Limitaciones de la generalización}
+% Analizar diferencias de dominio, dimensiones, distribución de clases, duplicados y criterio de etiquetado.
+% Distinguir limitaciones observadas de riesgos metodológicos potenciales.
+\pendiente{Discutir las limitaciones respaldadas por los resultados experimentales.}
+
+% ============================================================
 \section{Desempeño y justificación de selección}
-La selección debe justificarse por familia de generador, considerando el desempeño de clasificación y las condiciones de inferencia en producción.
-\pendiente{Agregar tabla comparativa, clasificadores ganadores y evidencia experimental definitiva.}
+\label{sec:desempeno_ia}
+\subsection{Resultados de los modelos para Perlin Noise}
+% FUENTE: salidas del notebook y manifiesto; usar la misma partición y métricas comparables.
+\begin{table}[htbp]
+	\centering
+	\caption{Resultados de clasificación para Perlin Noise}
+	\label{tab:resultados_perlin}
+	\renewcommand{\arraystretch}{1.5}
+	\begin{tabularx}{\textwidth}{|X|c|c|c|c|}
+		\hline
+		\rowcolor{gray!15} \textbf{Modelo} & \textbf{Accuracy} & \textbf{Precisión} & \textbf{Recall} & \textbf{F1} \\ \hline
+		Regresión Logística & 0,8218 & 0,8216 & 0,8218 & 0,8207 \\ \hline
+		SVM (RBF) & 0,8116 & 0,8097 & 0,8116 & 0,8091 \\ \hline
+		Gradient Boosting & 0,8087 & 0,8070 & 0,8087 & 0,8071 \\ \hline
+		Random Forest & 0,8064 & 0,8047 & 0,8064 & 0,8050 \\ \hline
+		MLP & 0,8022 & 0,8009 & 0,8022 & 0,8006 \\ \hline
+		KNN & 0,7409 & 0,7389 & 0,7409 & 0,7391 \\ \hline
+	\end{tabularx}
+\end{table}
+\FloatBarrier
+% Ajustar columnas al promedio y métricas reales. Agregar gráfica comparativa si aporta información.
+El mayor F1 macro de validación cruzada corresponde a Regresión Logística (0,8203). Los valores de la tabla corresponden a métricas de prueba agregadas, no a la validación cruzada.
+
+\subsection{Resultados de los modelos para Autómatas Celulares}
+\begin{table}[htbp]
+	\centering
+	\caption{Resultados de clasificación para Autómatas Celulares}
+	\label{tab:resultados_cellular}
+	\renewcommand{\arraystretch}{1.5}
+	\begin{tabularx}{\textwidth}{|X|c|c|c|c|}
+		\hline
+		\rowcolor{gray!15} \textbf{Modelo} & \textbf{Accuracy} & \textbf{Precisión} & \textbf{Recall} & \textbf{F1} \\ \hline
+		MLP & 0,8293 & 0,8360 & 0,8293 & 0,8304 \\ \hline
+		Random Forest & 0,8007 & 0,8088 & 0,8006 & 0,8020 \\ \hline
+		Gradient Boosting & 0,7860 & 0,7981 & 0,7860 & 0,7881 \\ \hline
+		SVM (RBF) & 0,8033 & 0,8372 & 0,8035 & 0,8058 \\ \hline
+		KNN & 0,7673 & 0,7941 & 0,7674 & 0,7692 \\ \hline
+		Regresión Logística & 0,7067 & 0,7270 & 0,7068 & 0,7048 \\ \hline
+	\end{tabularx}
+\end{table}
+\FloatBarrier
+El mayor F1 macro de validación cruzada corresponde a MLP (0,8054). Los valores de la tabla corresponden a métricas de prueba agregadas, no a la validación cruzada.
+
+\subsection{Selección de los modelos definitivos}
+% Contrastar winners del manifiesto con artefactos desplegados y criterio real de selección.
+% No atribuir la selección a velocidad o tamaño si no se midieron.
+El manifiesto selecciona Regresión Logística para Perlin Noise y MLP para Autómatas Celulares, con F1 macro de validación cruzada de 0,8203 y 0,8054, respectivamente. Los artefactos exportados son \texttt{best\_perlin.joblib} y \texttt{best\_cellular.joblib}.
+
+\subsection{Resultados del entrenamiento V2}
+El registro \texttt{training\_results.json} documenta un entrenamiento adicional con ocho características y un clasificador único. La Tabla~\ref{tab:resultados_v2} presenta el F1 macro de validación.
+\begin{table}[htbp]
+	\centering
+	\caption{Comparación de clasificadores V2}
+	\label{tab:resultados_v2}
+	\renewcommand{\arraystretch}{1.5}
+	\begin{tabularx}{\textwidth}{|X|c|}\hline
+		\rowcolor{gray!15} \textbf{Modelo} & \textbf{F1 macro} \\ \hline
+		Logistic Regression & 0,8775 \\ \hline
+		Knn & 0,9813 \\ \hline
+		Random Forest & 0,9840 \\ \hline
+		Svm & 0,9767 \\ \hline
+		Gradient Boosting & 0,9780 \\ \hline
+		Mlp & 0,9780 \\ \hline
+	\end{tabularx}
+\end{table}
+\FloatBarrier
+Random Forest fue seleccionado con F1 macro de validación de 0,9840 y obtuvo exactitud y F1 macro de 0,9808 en prueba. Estos resultados no constituyen una comparación controlada con el estudio por familia, debido a las diferencias en características y particiones.
+
+\subsection{Evaluación de la generación adaptativa}
+Esta etapa utiliza modelos previamente entrenados para evaluar su participación en la generación y selección de mapas candidatos. No corresponde a un nuevo entrenamiento de los clasificadores.
+% FUENTE: notebook o registros del evaluación adaptativa, respuestas JSON y mapas generados.
+% Describir objetivo, escenarios, semillas, dimensiones, clases solicitadas e intentos.
+% Confirmar criterio de selección y significado de target_probability; no confundir probabilidad con exactitud.
+% Si se midió tasa de coincidencia, definir denominador y aclarar que es coincidencia predicha, no verdad independiente.
+% Incorporar ejemplos de mapas, resultados por familia y clase, y comparación base/adaptativa solo si se ejecutó.
+\begin{table}[htbp]
+	\centering
+	\caption{Resultados de la evaluación de generación adaptativa}
+	\label{tab:resultados_adaptativos}
+	\renewcommand{\arraystretch}{1.5}
+	\begin{tabularx}{\textwidth}{|X|X|c|c|}
+		\hline
+		\rowcolor{gray!15} \textbf{Familia} & \textbf{Clase objetivo} & \textbf{Solicitudes} & \textbf{Coincidencias} \\ \hline
+		Por confirmar & Por confirmar & -- & -- \\ \hline
+	\end{tabularx}
+\end{table}
+\FloatBarrier
+\pendiente{Completar el protocolo, las evidencias y los resultados reales del protocolo de evaluación adaptativa.}
+
+\subsection{Análisis y discusión de resultados}
+% Interpretar ambos experimentos: desempeño predictivo frente a utilidad en generación adaptativa.
+% Relacionar resultados con objetivos específicos y limitaciones; no repetir tablas completas.
+% Las pruebas funcionales, API y rendimiento del sistema corresponden al capítulo 6.
+\pendiente{Redactar la discusión a partir de los resultados consolidados.}
+
+% ============================================================
 \section{Integración con la aplicación}
-Los artefactos entrenados se incorporan al backend según la estrategia descrita en la Sección~\ref{subsec:gestion_modelos_produccion}. La compatibilidad de características, clases y versiones de dependencias es necesaria para reproducir el comportamiento durante la inferencia.
+\label{sec:integracion_aplicacion_ia}
+\subsection{Artefactos resultantes del entrenamiento}
+Los modelos seleccionados se incorporan al backend mediante artefactos serializados. La estrategia arquitectónica de integración se describe en la Sección~\ref{sec:integracion_ia}.
+% Verificar nombres, versiones y correspondencia entre manifiesto y modelos desplegados.
+% Referenciar la tabla del capítulo 3 en lugar de duplicarla, tras confirmar su etiqueta.
+El repositorio contiene los artefactos especializados y el adaptador V2 que carga un modelo único. Se deben mantener separados sus contratos de características y clases. \pendiente{Confirmar cuál corresponde al despliegue definitivo y ajustar la sección 3.5 si procede.}
+
+\subsection{Proceso de inferencia en producción}
+% FUENTE: ml_adapter.py, generador adaptativo y configuración de características.
+% Explicar orden de entradas, transformación, predicción, clases y probabilidades según implementación.
+% No repetir el diagrama de secuencia ni la formalización de selección del capítulo 3.
+El servicio adaptativo V2 ejecuta todos los intentos configurados (entre 1 y 50), utilizando semillas consecutivas. Prioriza candidatos cuya clase predicha coincide con la solicitada y luego maximiza la probabilidad de dicha clase. En caso de empate exacto conserva el primer candidato. No reentrena el clasificador. \pendiente{Confirmar ruta y modelo activos en producción.}
+
+\subsection{Trazabilidad y reproducibilidad}
+% Relacionar notebook -> dataset -> resultados -> manifiesto -> artefacto -> backend.
+% Incorporar identificadores de versión, semillas y evidencias disponibles; remitir pruebas al capítulo 6.
+\pendiente{Consolidar la trazabilidad experimental y de despliegue.}
+
+% ============================================================
 \section{Consideraciones éticas y sesgo algorítmico}
-La complejidad estimada depende de las características estructurales y del criterio de etiquetado; no equivale necesariamente a dificultad percibida por un jugador. Las diferencias entre mapas procedurales y externos pueden afectar la generalización. Se deben documentar las licencias de los datos, las limitaciones del modelo y evitar atribuir al clasificador garantías de jugabilidad no verificadas.
+\label{sec:etica_ia}
+\subsection{Sesgos asociados al dataset y etiquetado}
+La clasificación depende de la representatividad de las muestras y del criterio utilizado para asignar los niveles de complejidad. Una distribución desigual de clases o una cobertura limitada de configuraciones procedurales puede afectar el comportamiento de los modelos.
+% Relacionar estos riesgos con los conteos y reglas reales; no afirmar sesgos medidos sin evidencia.
+Las etiquetas representan perfiles generativos solicitados y no juicios independientes de jugadores. Por tanto, un alto desempeño predictivo indica capacidad de recuperar esos perfiles, no una validación de dificultad jugable. La distribución por familia también limita la interpretación de resultados globales.
+
+\subsection{Limitaciones del modelo de complejidad}
+La complejidad estimada corresponde a propiedades estructurales de los mapas. No constituye por sí sola una garantía de jugabilidad, dificultad percibida, calidad narrativa o experiencia satisfactoria para el jugador.
+% Explicar límites de dominio, dependencia de etiquetas y ausencia de validación con jugadores si corresponde.
+\pendiente{Precisar las limitaciones observadas y el alcance de las conclusiones.}
+
+\subsection{Licenciamiento y uso responsable}
+% Registrar licencia de cada fuente externa, condiciones de reutilización y atribución.
+% Distinguir uso académico de autorización para redistribuir mapas o recursos de videojuegos.
+% No afirmar ausencia de datos personales ni permisos sin comprobar las fuentes.
+\pendiente{Documentar las licencias verificadas y las condiciones de uso de los datos.}
+
+\FloatBarrier
+% CONTROL FINAL: eliminar marcadores pendientes, verificar referencias y citas,
+% reemplazar todas las filas provisionales, compilar y revisar tablas y figuras.
+% Confirmar que las conclusiones coinciden con los notebooks y el backend definitivo.

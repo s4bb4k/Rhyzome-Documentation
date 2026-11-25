@@ -41,10 +41,13 @@
 }
 
 \usepackage{float}
-\usepackage{xcolor}
+\usepackage[table]{xcolor}
 \usepackage{caption}
 \usepackage{chngcntr}
 \usepackage[table]{xcolor}
+\usepackage{tocloft}
+\usepackage{amsmath}
+\usepackage{amssymb}
 
 % ============================================================
 % 4. ENLACES Y REFERENCIAS CRUZADAS
@@ -179,6 +182,24 @@
 % Evitar reiniciar numeración por capítulo
 \counterwithout{figure}{chapter}
 \counterwithout{table}{chapter}
+
+% ------------------------------------------------------------
+% Formato del índice de tablas
+% ------------------------------------------------------------
+
+\renewcommand{\cfttabpresnum}{Tabla~}
+\renewcommand{\cfttabaftersnum}{.}
+\setlength{\cfttabnumwidth}{2.5cm}
+\setlength{\cfttabindent}{0cm}
+
+% ------------------------------------------------------------
+% Formato del índice de figuras
+% ------------------------------------------------------------
+
+\renewcommand{\cftfigpresnum}{Figura~}
+\renewcommand{\cftfigaftersnum}{.}
+\setlength{\cftfignumwidth}{2.5cm}
+\setlength{\cftfigindent}{0cm}
 
 % ============================================================
 % 13. COMANDOS PERSONALIZADOS

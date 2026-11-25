@@ -12,24 +12,11 @@ El proyecto busca facilitar la creación de escenarios bidimensionales mediante 
 % ============================================================
 \section{Descripción del problema o necesidad}
 
-La creación de mapas para videojuegos bidimensionales puede requerir un esfuerzo considerable de diseño, especialmente cuando es necesario producir múltiples escenarios con diferentes configuraciones, niveles de complejidad y características de navegación.
+La creación de mapas para videojuegos bidimensionales puede requerir un esfuerzo considerable de diseño, especialmente cuando es necesario producir múltiples escenarios con diferentes configuraciones, niveles de complejidad y características de navegación. El diseño manual implica definir la distribución de los elementos del escenario, establecer zonas transitables y obstáculos, mantener la coherencia espacial y comprobar que las características del mapa correspondan con los objetivos de la experiencia de juego. Estas actividades pueden dificultar la generación de múltiples alternativas durante las etapas de experimentación y prototipado.
 
-El diseño manual implica definir la distribución de los elementos del escenario, establecer zonas transitables y obstáculos, mantener la coherencia espacial y comprobar que las características del mapa correspondan con los objetivos de la experiencia de juego.
+La generación procedural constituye una alternativa para automatizar parcialmente este proceso mediante algoritmos capaces de producir escenarios a partir de parámetros y reglas previamente definidos. Sin embargo, la generación automática no garantiza por sí misma que los escenarios obtenidos presenten características estructurales adecuadas, dado que pueden contener regiones aisladas, distribuciones poco equilibradas de obstáculos o niveles de complejidad diferentes de los esperados. Por esta razón, resulta necesario complementar la generación procedural con mecanismos que permitan analizar y evaluar las propiedades de los mapas obtenidos.
 
-Estas actividades pueden dificultar la generación de múltiples alternativas durante las etapas de experimentación y prototipado.
-
-La generación procedural constituye una alternativa para automatizar parcialmente este proceso, mediante algoritmos capaces de producir escenarios a partir de parámetros y reglas previamente definidos.
-
-Sin embargo, la generación automática no garantiza por sí misma que los escenarios obtenidos presenten características estructurales adecuadas.
-
-Un mapa generado puede contener regiones aisladas, distribuciones poco equilibradas de obstáculos o niveles de complejidad diferentes de los esperados.
-
-Por esta razón, resulta necesario complementar la generación procedural con mecanismos que permitan analizar y evaluar los mapas obtenidos.
-
-En respuesta a esta necesidad, Rhyzome integra algoritmos de generación procedural y modelos de aprendizaje automático, con el propósito
-de apoyar la selección de escenarios a partir de características cuantificables.
-
-De esta manera, el problema abordado no se limita a generar mapas automáticamente, sino que también considera la necesidad de evaluar sus propiedades y facilitar la selección de resultados acordes con los parámetros establecidos por el usuario.
+En respuesta a esta necesidad, Rhyzome integra algoritmos de generación procedural y modelos de aprendizaje automático con el propósito de apoyar la selección de escenarios a partir de características cuantificables. De esta manera, el problema abordado no se limita a la generación automática de mapas, sino que también comprende la evaluación de sus propiedades estructurales y la selección de resultados acordes con los parámetros y niveles de complejidad establecidos por el usuario. 
 
 % ============================================================
 % 2.2. CONTEXTO DE APLICACION
@@ -37,13 +24,7 @@ De esta manera, el problema abordado no se limita a generar mapas automáticamen
 
 \section{Contexto de aplicación}
 
-Rhyzome se desarrolla en el ámbito de la creación de videojuegos bidimensionales, específicamente en los procesos de generación y experimentación con escenarios virtuales.
-
-La aplicación está orientada principalmente a desarrolladores independientes, estudiantes y personas interesadas en la creación de mapas para videojuegos.
-
-Estos usuarios pueden requerir herramientas que faciliten la construcción de escenarios sin necesidad de diseñar manualmente cada una de sus estructuras.
-
-El sistema contempla la generación de cuatro tipos de escenarios:
+Rhyzome se desarrolla en el ámbito de la creación de videojuegos bidimensionales, específicamente en los procesos de generación y experimentación con escenarios virtuales. La aplicación está orientada principalmente a desarrolladores independientes, estudiantes y personas interesadas en la creación de mapas para videojuegos que requieren herramientas capaces de facilitar la construcción de escenarios sin necesidad de diseñar manualmente cada una de sus estructuras. En este contexto, el sistema contempla la generación de cuatro tipos de escenarios:
 
 \begin{itemize}
     \item \textbf{Bosque:}
@@ -59,13 +40,7 @@ El sistema contempla la generación de cuatro tipos de escenarios:
     escenarios compuestos por espacios transitables, obstáculos y regiones conectadas.
 \end{itemize}
 
-Para la generación de estos escenarios, Rhyzome utiliza dos algoritmos principales: Perlin Noise \parencite{perlin1985} y Autómatas Celulares \parencite{johnson2010}.
-
-Perlin Noise se emplea para la generación de bosques, desiertos y ciudades, mientras que los Autómatas Celulares se utilizan para la construcción de mazmorras.
-
-La aplicación dispone de una interfaz web que permite configurar parámetros de generación y visualizar los mapas obtenidos.
-
-Adicionalmente, incorpora un componente de aprendizaje automático que participa en la evaluación y selección de mapas, considerando características estructurales y niveles de complejidad.
+Para la generación de estos escenarios, Rhyzome utiliza dos algoritmos principales: Perlin Noise \parencite{perlin1985}, empleado para la generación de bosques, desiertos y ciudades, y Autómatas Celulares \parencite{johnson2010}, utilizados para la construcción de mazmorras. La aplicación dispone de una interfaz web que permite configurar los parámetros de generación y visualizar los mapas obtenidos. Asimismo, incorpora un componente de aprendizaje automático que complementa el proceso de generación procedural mediante la evaluación de las características estructurales de los mapas y la selección de escenarios de acuerdo con los niveles de complejidad establecidos por el usuario.
 
 El contexto de aplicación del proyecto corresponde principalmente al prototipado, la experimentación y el apoyo al diseño
 de escenarios bidimensionales.
@@ -79,26 +54,7 @@ de escenarios bidimensionales.
 
 La incorporación de inteligencia artificial en Rhyzome responde a la necesidad de complementar los algoritmos de generación procedural con mecanismos de evaluación que permitan analizar las características de los mapas producidos.
 
-Desde una perspectiva técnica, los algoritmos procedurales permiten generar diferentes configuraciones espaciales mediante parámetros como dimensiones, semillas y condiciones específicas de generación.
-
-No obstante, estos algoritmos no determinan necesariamente si un escenario generado corresponde con el nivel de complejidad
-esperado por el usuario.
-
-Por esta razón, Rhyzome incorpora modelos de aprendizaje automático supervisado que permiten clasificar características de los mapas generados.
-
-El componente inteligente utiliza información obtenida mediante métricas estructurales, entre ellas la accesibilidad, conectividad, densidad de obstáculos y distribución de regiones transitables.
-
-Estas características permiten representar propiedades de los escenarios y utilizarlas como entrada para los modelos de clasificación.
-
-La integración de estos modelos busca apoyar la selección de mapas candidatos de acuerdo con niveles de complejidad previamente definidos.
-
-De esta manera, la inteligencia artificial no reemplaza los algoritmos procedurales, sino que complementa su funcionamiento mediante un proceso de evaluación y selección.
-
-Desde una perspectiva social y educativa, Rhyzome busca facilitar el acceso a herramientas de experimentación con generación procedural e inteligencia artificial.
-
-La aplicación puede servir como recurso de apoyo para estudiantes y desarrolladores interesados en comprender la relación entre los parámetros de generación, las características estructurales de los mapas y los resultados obtenidos.
-
-Asimismo, el proyecto permite explorar la aplicación de técnicas de aprendizaje automático en un contexto práctico de desarrollo de videojuegos.
+Desde una perspectiva técnica, los algoritmos procedurales permiten generar diferentes configuraciones espaciales mediante parámetros como dimensiones, semillas y condiciones específicas de generación. No obstante, estos algoritmos no determinan necesariamente si los escenarios generados corresponden con el nivel de complejidad esperado por el usuario. Por esta razón, Rhyzome incorpora modelos de aprendizaje automático supervisado que utilizan características estructurales de los mapas, como la accesibilidad, la conectividad, la densidad de obstáculos y la distribución de regiones transitables, para clasificar su nivel de complejidad y apoyar la selección de escenarios acordes con los parámetros establecidos. De esta manera, la inteligencia artificial no reemplaza los algoritmos procedurales, sino que complementa su funcionamiento mediante un proceso de evaluación y selección. Desde una perspectiva social y educativa, Rhyzome busca facilitar el acceso a herramientas de experimentación con generación procedural e inteligencia artificial, proporcionando un recurso de apoyo para estudiantes y desarrolladores interesados en comprender la relación entre los parámetros de generación, las características estructurales de los mapas y los resultados obtenidos. Asimismo, el proyecto permite explorar la aplicación de técnicas de aprendizaje automático en un contexto práctico de desarrollo de videojuegos.
 
 La pertinencia de la solución radica, por tanto, en la integración de generación procedural, evaluación cuantitativa y aprendizaje automático dentro de una misma herramienta.
 
