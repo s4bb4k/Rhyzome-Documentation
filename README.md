@@ -64,17 +64,226 @@ MiKTeX puede instalar automáticamente los paquetes faltantes durante la compila
 
 ## 6. Configuración de TeXstudio
 
+TeXstudio es el editor principal utilizado para la elaboración del informe final de Rhyzome. La configuración del entorno permite centralizar los archivos generados durante la compilación en el directorio `build/`, manteniendo organizada la estructura del repositorio.
+
+### 6.1. Configuración general
+
 Acceder a:
 
 **Opciones → Configurar TeXstudio → Compilación**
 
 Establecer las siguientes herramientas:
 
-- Compilador predeterminado: PdfLaTeX.
-- Herramienta de bibliografía predeterminada: Biber.
-- Visor PDF: visor interno de TeXstudio.
+| Parámetro | Configuración |
+|---|---|
+| Compilador predeterminado | PdfLaTeX |
+| Herramienta de bibliografía predeterminada | Biber |
+| Visor PDF | Visor PDF externo |
+| Distribución LaTeX | MiKTeX |
 
 El documento utiliza BibLaTeX y Biber para la gestión de referencias bibliográficas con estilo APA.
+
+### 6.2. Configuración del compilador PdfLaTeX
+
+Acceder a:
+
+**Opciones → Configurar TeXstudio → Comandos**
+
+Localizar el campo correspondiente a PdfLaTeX y establecer el siguiente comando:
+
+```bash
+pdflatex.exe -synctex=1 -interaction=nonstopmode -output-directory=build %.tex
+```
+
+Descripción de los parámetros:
+
+| Parámetro | Descripción |
+|---|---|
+| `-synctex=1` | Habilita la sincronización entre el código fuente y el PDF. |
+| `-interaction=nonstopmode` | Permite continuar la compilación sin interrupciones interactivas. |
+| `-output-directory=build` | Establece el directorio de salida de los archivos generados. |
+| `%.tex` | Identifica el archivo LaTeX que se debe compilar. |
+
+Antes de realizar la primera compilación, verificar que el directorio `build/` exista en la raíz del repositorio.
+
+### 6.3. Configuración de Biber
+
+En la sección de comandos de TeXstudio, verificar que Biber se encuentre disponible y configurado como herramienta predeterminada para el procesamiento de la bibliografía.
+
+Si la configuración predeterminada funciona correctamente, no es necesario modificarla.
+
+En caso de que Biber no encuentre el archivo `main.bcf` generado dentro del directorio `build/`, se puede utilizar la siguiente configuración alternativa:
+
+```bash
+biber.exe --input-directory=build --output-directory=build %
+```
+
+Esta configuración permite localizar los archivos de control bibliográfico y almacenar los resultados del procesamiento en el directorio de compilación.
+
+### 6.4. Configuración de las opciones avanzadas
+
+Acceder a:
+
+**Opciones → Configurar TeXstudio**
+
+Activar la opción **Mostrar opciones avanzadas**, ubicada en la parte inferior de la ventana de configuración.
+
+Posteriormente, ingresar a:
+
+**Compilación → Directorios de búsqueda adicionales**
+
+En el campo correspondiente a **Archivo PDF**, establecer:
+
+```text
+build
+```
+
+Esta configuración permite que TeXstudio localice el documento PDF generado dentro del directorio `build/`, en lugar de buscarlo en la raíz del repositorio.
+
+### 6.5. Configuración del visor PDF externo
+
+Para visualizar el documento compilado mediante Microsoft Edge, acceder a:
+
+**Opciones → Configurar TeXstudio → Comandos**
+
+Localizar el campo **Visor PDF externo** y establecer el siguiente comando:
+
+```bash
+"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --single-argument ?am.pdf &
+```
+
+La ruta del ejecutable corresponde a una instalación habitual de Microsoft Edge en Windows. En caso de utilizar una ubicación diferente, deberá ajustarse según el entorno.
+
+La combinación del visor externo y los directorios de búsqueda adicionales permite abrir el archivo PDF generado dentro de `build/`.
+
+### 6.6. Configuración de la compilación automática
+
+En la sección **Compilación**, se puede configurar la opción de compilación y visualización mediante la siguiente secuencia:
+
+```text
+txs:///pdflatex | txs:///biber | txs:///pdflatex | txs:///pdflatex | txs:///view
+```
+
+Esta secuencia permite ejecutar:
+
+1. Compilación inicial del documento.
+2. Procesamiento de las referencias bibliográficas.
+3. Actualización de las citas y referencias cruzadas.
+4. Consolidación de los índices y la numeración.
+5. Visualización del documento PDF.
+
+La compilación completa resulta especialmente útil cuando se incorporan nuevas referencias bibliográficas, figuras, tablas o capítulos.
+
+## 7. Compilación del documento
+
+### 7.1. Compilación desde TeXstudio
+
+Para compilar el informe:
+
+1. Abrir TeXstudio.
+2. Abrir el archivo `main.tex`.
+3. Verificar que el directorio `build/` exista.
+4. Ejecutar la opción **Compilar y visualizar** mediante la tecla `F5`.
+5. Verificar que el documento PDF se genere correctamente.
+
+El documento compilado estará disponible en:
+
+```text
+build/main.pdf
+```
+
+Cuando se requiera actualizar la bibliografía o las referencias cruzadas, ejecutar la secuencia completa de compilación.
+
+### 7.2. Compilación desde la terminal
+
+Como alternativa a TeXstudio, el documento puede compilarse desde una terminal ubicada en la raíz del repositorio.
+
+Crear el directorio `build/` si todavía no existe:
+
+```bash
+mkdir build
+```
+
+Ejecutar los siguientes comandos:
+
+```bash
+pdflatex -synctex=1 -interaction=nonstopmode -output-directory=build main.tex
+biber --input-directory=build --output-directory=build main
+pdflatex -synctex=1 -interaction=nonstopmode -output-directory=build main.tex
+pdflatex -synctex=1 -interaction=nonstopmode -output-directory=build main.tex
+```
+
+Como resultado, se generará el archivo `build/main.pdf`.
+
+### 7.3. Verificación de la compilación
+
+Después de compilar el documento, verificar:
+
+- Generación correcta del archivo PDF.
+- Visualización de todos los capítulos.
+- Actualización de la tabla de contenido.
+- Actualización del índice de figuras y tablas.
+- Resolución de las referencias cruzadas.
+- Generación de la bibliografía en estilo APA.
+- Ausencia de errores críticos de compilación.
+
+## 8. Gestión de archivos auxiliares
+
+Durante la compilación, LaTeX genera archivos auxiliares necesarios para gestionar referencias cruzadas, bibliografía, índices y registros de ejecución.
+
+Estos archivos se centralizan en el directorio `build/`.
+
+```text
+build/
+├── main.aux
+├── main.bbl
+├── main.bcf
+├── main.blg
+├── main.lof
+├── main.log
+├── main.lot
+├── main.out
+├── main.run.xml
+├── main.synctex.gz
+├── main.toc
+└── main.pdf
+```
+
+Los archivos generados durante la compilación no forman parte del código fuente del informe y deben excluirse del control de versiones mediante `.gitignore`.
+
+### 8.1. Exclusión del directorio de compilación
+
+El archivo `.gitignore` debe incluir la siguiente regla:
+
+```gitignore
+build/
+```
+
+Debido a que Git no realiza el seguimiento de directorios vacíos, después de clonar el repositorio será necesario crear el directorio `build/` antes de ejecutar la primera compilación.
+
+### 8.2. Limpieza de archivos auxiliares
+
+En caso de inconsistencias relacionadas con referencias bibliográficas, índices o numeración, se recomienda:
+
+1. Cerrar el documento PDF.
+2. Eliminar los archivos generados dentro de `build/`.
+3. Conservar el directorio `build/`.
+4. Ejecutar nuevamente la secuencia completa de compilación.
+5. Verificar el resultado obtenido.
+
+### 8.3. Solución de problemas frecuentes
+
+| Problema | Solución |
+|---|---|
+| El PDF se busca en la raíz del repositorio. | Verificar que `build` esté configurado en los directorios de búsqueda adicionales para archivos PDF. |
+| El PDF no se genera. | Verificar la existencia del directorio `build/` y revisar el registro de compilación. |
+| Las referencias aparecen como `??`. | Ejecutar nuevamente PdfLaTeX hasta resolver las referencias cruzadas. |
+| Las citas bibliográficas no aparecen correctamente. | Ejecutar Biber y posteriormente PdfLaTeX dos veces. |
+| Biber no encuentra `main.bcf`. | Verificar los directorios de entrada y salida de Biber. |
+| Faltan paquetes LaTeX. | Verificar la configuración de instalación automática de paquetes en MiKTeX. |
+| El visor externo no abre el documento. | Verificar la ruta del ejecutable de Microsoft Edge y la configuración de búsqueda del PDF. |
+| El PDF muestra una versión anterior. | Verificar que se esté visualizando `build/main.pdf` y no un archivo generado anteriormente en la raíz. |
+
 
 ## 7. Compilación del documento
 
