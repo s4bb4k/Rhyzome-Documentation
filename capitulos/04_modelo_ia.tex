@@ -1703,73 +1703,1123 @@ Asimismo, los resultados experimentales representan la capacidad de los modelos 
 
 
 \subsection{Entrenamiento y comparación de modelos por familia}
-% Explicar ejecución paso a paso: carga, extracción, etiquetas, partición, entrenamiento y evaluación.
-% Confirmar si se entrenaron modelos independientes por familia y cómo se compararon.
-% Los resultados numéricos se presentan en la Sección 4.6, no duplicarlos aquí.
-Se construyen los vectores de entrada, se codifica la complejidad solicitada y se realizan comparaciones globales y por familia. Para cada semilla se ajustan los clasificadores y se evalúan sobre la partición de prueba. Los artefactos seleccionados por familia se exportan con semilla 42. \pendiente{Confirmar la denominación histórica de las etapas con evidencias distintas de las dos copias idénticas del notebook.}
+\label{subsec:entrenamiento_modelos_familia}
 
-\subsection{Configuración de hiperparámetros}
-% Distinguir hiperparámetros fijos, búsqueda de hiperparámetros y parámetros aprendidos.
-% No afirmar GridSearchCV ni optimización si no aparecen en el notebook.
+El entrenamiento del componente inteligente de Rhyzome se realizó mediante aprendizaje supervisado, fuera del entorno de producción, con el propósito de identificar los clasificadores con mejor desempeño en la predicción de la complejidad de los mapas generados proceduralmente. El conjunto experimental estuvo conformado por 10.000 mapas, de los cuales 7.500 corresponden a Perlin Noise y 2.500 a autómatas celulares. Cada mapa se representó mediante un vector de características estructurales asociado a la etiqueta de complejidad solicitada durante su generación: bajo, medio o alto.
+
+La estrategia experimental contempló dos enfoques complementarios:
+
+\begin{itemize}
+	
+	\item \textbf{Evaluación global:} 
+	comparación de los clasificadores utilizando el conjunto completo de mapas, con el propósito de establecer una referencia general de su desempeño.
+	
+	\item \textbf{Evaluación por familia:} 
+	entrenamiento y comparación independiente de los clasificadores sobre los subconjuntos correspondientes a Perlin Noise y autómatas celulares, con el fin de identificar el modelo más adecuado para cada familia de generación procedural.
+	
+\end{itemize}
+
+La Figura~\ref{fig:flujo_entrenamiento_modelos_ia} presenta el procedimiento experimental, desde la preparación de los datos hasta la selección y exportación de los modelos. Las ramas representan los diferentes enfoques de evaluación considerados, sin implicar necesariamente una ejecución concurrente de los clasificadores.
+
+\FloatBarrier
+
+\begin{figure}[H]
+	\centering
+	
+	\includegraphics[
+	width=\textwidth,
+	height=0.85\textheight,
+	keepaspectratio
+	]{imagenes/flujo_entrenamiento_modelos_ia.png}
+	
+	\caption{Flujo de entrenamiento y selección de 
+		modelos de inteligencia artificial en Rhyzome}
+	
+	\label{fig:flujo_entrenamiento_modelos_ia}
+	
+\end{figure}
+
+\FloatBarrier
+
+El procedimiento experimental se organizó en las siguientes etapas:
+
+\begin{enumerate}
+	
+	\item \textbf{Preparación y representación de los datos.}
+	Se organizaron los mapas generados proceduralmente, se extrajeron sus características estructurales y se codificaron las etiquetas de complejidad mediante los valores 0 (bajo), 1 (medio) y 2 (alto).
+	
+	\item \textbf{Organización y partición de los datos.}
+	Se conformó un conjunto global y dos subconjuntos correspondientes a las familias de generación procedural. Para cada enfoque se realizó una partición estratificada, destinando el 80\,\% de las muestras al entrenamiento y el 20\,\% a las pruebas.
+	
+	\item \textbf{Entrenamiento y validación cruzada.}
+	Se evaluaron los seis clasificadores considerados en el estudio experimental utilizando las semillas 42, 123 y 2026, mediante un esquema de validación cruzada estratificada de cinco particiones sobre los datos de entrenamiento. Este procedimiento permitió estimar el desempeño de los modelos y analizar su estabilidad frente a diferentes particiones de los datos.
+	
+	\item \textbf{Evaluación sobre el conjunto de prueba.}
+	Los clasificadores ajustados se evaluaron utilizando las muestras reservadas para prueba, con el propósito de analizar su capacidad de clasificación sobre datos no utilizados durante el ajuste correspondiente.
+	
+	\item \textbf{Comparación y selección de modelos.}
+	Se comparó el desempeño de los clasificadores utilizando como criterio principal el F1 macro promedio de validación cruzada, considerando el ROC-AUC y el tiempo de inferencia como criterios complementarios.
+	
+	\item \textbf{Exportación de los modelos seleccionados.}
+	Los clasificadores seleccionados correspondientes a la configuración experimental con semilla 42 se almacenaron mediante la biblioteca \texttt{joblib} para su incorporación al backend de Rhyzome.
+	
+\end{enumerate}
+
+\subsubsection{Selección independiente por familia}
+
+La selección de clasificadores independientes responde a las diferencias estructurales entre los mapas generados mediante Perlin Noise y autómatas celulares. Mientras que Perlin Noise produce distribuciones espaciales basadas en variaciones continuas de ruido, los autómatas celulares generan configuraciones mediante reglas locales de transición. Estas diferencias pueden influir en la distribución de las características de entrada y en el desempeño de los clasificadores.
+
+En consecuencia, la selección se realizó de manera independiente para cada familia, utilizando los resultados de la evaluación correspondiente. El procedimiento experimental permitió seleccionar la regresión logística para Perlin Noise y el perceptrón multicapa (MLP) para autómatas celulares.
+
+\subsubsection{Exportación de los modelos seleccionados}
+
+Los modelos seleccionados se almacenaron como artefactos serializados mediante la biblioteca \texttt{joblib}, permitiendo separar el entrenamiento experimental del proceso de inferencia ejecutado por el prototipo. La Tabla~\ref{tab:artefactos_modelos_entrenados} presenta los clasificadores seleccionados y sus correspondientes archivos de serialización.
+
 \begin{table}[htbp]
 	\centering
+	
+	\caption{Artefactos de los modelos seleccionados por familia de generación procedural}
+	
+	\label{tab:artefactos_modelos_entrenados}
+	
+	\renewcommand{\arraystretch}{1.5}
+	
+	\begin{tabularx}{\textwidth}{
+			|>{\raggedright\arraybackslash}p{3.2cm}|
+			>{\raggedright\arraybackslash}X|
+			>{\raggedright\arraybackslash}X|
+			>{\centering\arraybackslash}p{1.4cm}|
+		}
+		
+		\hline
+		
+		\rowcolor{gray!15}
+		\textbf{Familia} &
+		\textbf{Modelo seleccionado} &
+		\textbf{Artefacto} &
+		\textbf{Semilla} \\
+		
+		\hline
+		
+		Perlin Noise &
+		Regresión Logística &
+		\texttt{best\_perlin.joblib} &
+		42 \\
+		
+		\hline
+		
+		Autómatas celulares &
+		Perceptrón multicapa (MLP) &
+		\texttt{best\_cellular.joblib} &
+		42 \\
+		
+		\hline
+		
+	\end{tabularx}
+	
+\end{table}
+
+\FloatBarrier
+
+La serialización permite recuperar los clasificadores previamente entrenados sin repetir el procedimiento experimental durante las solicitudes de generación de mapas. Los artefactos se utilizan para realizar la inferencia de complejidad dentro del servicio de generación adaptativa, de acuerdo con la estrategia de integración descrita en el Capítulo~\ref{cap:03_diseno_arquitectura}.
+
+Los resultados cuantitativos de la comparación global y por familia, así como las métricas de desempeño que respaldan la selección de los clasificadores, se presentan en la Sección~4.6.
+
+
+% ================================================================================================
+
+\subsection{Configuración de hiperparámetros}
+\label{subsec:configuracion_hiperparametros}
+
+Los clasificadores evaluados en Rhyzome se configuraron mediante hiperparámetros predefinidos para establecer condiciones reproducibles de comparación experimental. A diferencia de los parámetros internos, cuyos valores se determinan durante el aprendizaje, los hiperparámetros establecen previamente aspectos relacionados con la estructura, regularización y comportamiento del entrenamiento de cada modelo. La estrategia experimental se centró en comparar diferentes algoritmos de clasificación bajo configuraciones establecidas, sin realizar una búsqueda sistemática de hiperparámetros.
+
+La Tabla~\ref{tab:hiperparametros_ia} presenta los principales hiperparámetros configurados explícitamente para los seis clasificadores evaluados, así como la aplicación de estandarización de las características de entrada.
+
+\begin{table}[htbp]
+	\centering
+	
 	\caption{Configuración de los clasificadores evaluados}
 	\label{tab:hiperparametros_ia}
+	
 	\renewcommand{\arraystretch}{1.5}
-	\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{3.5cm}|X|X|}
+	
+	\begin{tabularx}{\textwidth}{
+			|>{\raggedright\arraybackslash}p{2.8cm}|
+			>{\raggedright\arraybackslash}X|
+			>{\raggedright\arraybackslash}X|
+			>{\centering\arraybackslash}p{1.8cm}|
+		}
+		
 		\hline
-		\rowcolor{gray!15} \textbf{Modelo} & \textbf{Hiperparámetros} & \textbf{Valores utilizados} \\ \hline
-		Regresión Logística & Iteraciones máximas; pesos & 2000; balanceados \\ \hline
-		KNN & Vecinos; pesos & 7; distancia \\ \hline
-		Random Forest & Árboles; pesos & 300; balanceados \\ \hline
-		SVM (RBF) & C; probabilidades; pesos & 2; activadas; balanceados \\ \hline
-		Gradient Boosting & Estimadores; tasa; profundidad & 150; 0,05; 3 \\ \hline
-		MLP & Capas; iteraciones; parada temprana & 64 y 32; 1000; activada \\ \hline
+		
+		\rowcolor{gray!15}
+		\textbf{Modelo} &
+		\textbf{Hiperparámetros} &
+		\textbf{Valores utilizados} &
+		\textbf{Escalado} \\
+		
+		\hline
+		
+		Regresión logística &
+		Iteraciones máximas\newline
+		Pesos de clase &
+		2000\newline
+		Balanceados &
+		Sí \\
+		
+		\hline
+		
+		KNN &
+		Número de vecinos\newline
+		Ponderación &
+		7\newline
+		Distancia &
+		Sí \\
+		
+		\hline
+		
+		Random Forest &
+		Número de árboles\newline
+		Pesos de clase &
+		300\newline
+		Balanceados &
+		No \\
+		
+		\hline
+		
+		SVM (RBF) &
+		Kernel\newline
+		Parámetro $C$\newline
+		Estimación de probabilidades\newline
+		Pesos de clase &
+		RBF\newline
+		2\newline
+		Activada\newline
+		Balanceados &
+		Sí \\
+		
+		\hline
+		
+		Gradient Boosting &
+		Número de estimadores\newline
+		Tasa de aprendizaje\newline
+		Profundidad máxima &
+		150\newline
+		0,05\newline
+		3 &
+		No \\
+		
+		\hline
+		
+		MLP &
+		Capas ocultas\newline
+		Iteraciones máximas\newline
+		Parada temprana &
+		64 y 32 neuronas\newline
+		1000\newline
+		Activada &
+		Sí \\
+		
+		\hline
+		
 	\end{tabularx}
+	
 \end{table}
+
 \FloatBarrier
-La tabla corresponde al constructor de modelos del notebook de 10.000 mapas. % Verificar por separado hiperparámetros V2.
+
+Los clasificadores de regresión logística, KNN, SVM y MLP utilizaron la estandarización de características mediante \texttt{StandardScaler}, integrado dentro de un \texttt{Pipeline} de scikit-learn. Esta configuración permitió ajustar la transformación exclusivamente sobre los datos de entrenamiento de cada partición durante la validación cruzada, evitando la incorporación de información de las muestras reservadas para evaluación en el ajuste del escalador. Por su parte, Random Forest y Gradient Boosting utilizaron las características originales, dado que los algoritmos basados en árboles de decisión no requieren la estandarización de las variables de entrada.
+
+Las configuraciones de los clasificadores se mantuvieron en el protocolo experimental orientado al análisis de diferentes tamaños del conjunto de entrenamiento, con el propósito de estudiar el efecto del volumen de datos sin introducir modificaciones en los hiperparámetros evaluados.
+
+% ==============================================================================================
 
 \subsection{Reproducibilidad del entrenamiento}
-% Registrar Python, scikit-learn, NumPy, semillas, notebook, versión del dataset y commit si existe.
-% Diferenciar versiones del entorno experimental de las del backend.
-El manifiesto registra Python 3.13.15, scikit-learn 1.6.1, Joblib 1.6.0, NumPy 2.1.3 y pandas 2.2.3. Incluye hashes SHA-256 de los dos artefactos especializados. \pendiente{Confirmar versiones efectivas del despliegue y compatibilidad de serialización.}
+\label{subsec:reproducibilidad_entrenamiento}
 
-% ============================================================
+La reproducibilidad del procedimiento experimental de Rhyzome se fundamenta en el registro de las configuraciones de entrenamiento, las semillas aleatorias, las versiones de las bibliotecas y la conservación de los artefactos generados. Estas condiciones se documentan en el archivo \texttt{experiment\_manifest.json}, ubicado en el directorio \texttt{experiment/artifacts/} del repositorio backend, que registra la información del experimento de 10.000 mapas, los modelos seleccionados, las métricas obtenidas y los valores hash de los artefactos exportados.
+
+El procedimiento experimental utilizó las semillas 42, 123 y 2026 para controlar los componentes aleatorios del entrenamiento y la evaluación de los clasificadores, mientras que la exportación de los modelos especializados se realizó con la semilla 42.
+
+\subsubsection{Entorno experimental y entorno de ejecución}
+
+El entrenamiento de los clasificadores se realizó en Google Colab mediante un notebook de Python, mientras que el backend de Rhyzome dispone de un entorno independiente destinado a la carga de los modelos entrenados y a la ejecución de inferencias. La Tabla~\ref{tab:versiones_entorno_experimental}
+presenta las versiones registradas en el manifiesto experimental y las verificadas en el entorno virtual local del backend.
+
+\begin{table}[htbp]
+	\centering
+	
+	\caption{Versiones del entorno experimental y del backend local}
+	\label{tab:versiones_entorno_experimental}
+	
+	\renewcommand{\arraystretch}{1.5}
+	
+	\begin{tabularx}{\textwidth}{
+			|>{\raggedright\arraybackslash}p{3.5cm}|
+			>{\centering\arraybackslash}X|
+			>{\centering\arraybackslash}X|
+		}
+		
+		\hline
+		
+		\rowcolor{gray!15}
+		\textbf{Tecnología} &
+		\textbf{Google Colab (entrenamiento)} &
+		\textbf{Backend local (inferencia)} \\
+		
+		\hline
+		Python & 3.13.15 & 3.11.9 \\
+		\hline
+		scikit-learn & 1.6.1 & 1.6.1 \\
+		\hline
+		Joblib & 1.6.0 & 1.6.0 \\
+		\hline
+		NumPy & 2.1.3 & 2.3.5 \\
+		\hline
+		pandas & 2.2.3 & 3.1.1 \\
+		\hline
+		
+	\end{tabularx}
+	
+\end{table}
+
+\FloatBarrier
+
+Las diferencias entre las versiones de Python, NumPy y pandas corresponden a las configuraciones propias de ambos entornos. Durante la integración de los modelos se ajustó únicamente la versión de scikit-learn, de 1.8.0 a 1.6.1, con el propósito de mantener la correspondencia con la versión utilizada durante el entrenamiento y la serialización en Google Colab. Esta decisión técnica permitió reducir el riesgo de incompatibilidades en la recuperación de los clasificadores, sin modificar las demás dependencias del backend ni requerir un nuevo entrenamiento. 
+
+\subsubsection{Integridad y trazabilidad de los artefactos}
+
+La integridad de los modelos especializados se verificó mediante el cálculo de sus valores hash SHA-256, utilizando el comando \texttt{Get-FileHash} de PowerShell sobre los archivos almacenados en el directorio \path{experiment/artifacts/models/}. Los resultados obtenidos en la rama \texttt{master} se compararon con los registrados en el manifiesto experimental, como se presenta en la Tabla~\ref{tab:integridad_artefactos_ia}.
+
+\begin{table}[htbp]
+	\centering
+	
+	\caption{Verificación de integridad de los artefactos mediante SHA-256}
+	\label{tab:integridad_artefactos_ia}
+	
+	\renewcommand{\arraystretch}{1.5}
+	
+	\begin{tabularx}{\textwidth}{
+			|>{\raggedright\arraybackslash}p{3.5cm}|
+			>{\raggedright\arraybackslash}X|
+			>{\centering\arraybackslash}p{3cm}|
+		}
+		
+		\hline
+		
+		\rowcolor{gray!15}
+		\textbf{Familia} &
+		\textbf{Artefacto} &
+		\textbf{Resultado} \\
+		
+		\hline
+		
+		Perlin Noise &
+		\texttt{best\_perlin.joblib} &
+		Coincide \\
+		
+		\hline
+		
+		Autómatas celulares &
+		\texttt{best\_cellular.joblib} &
+		Coincide \\
+		
+		\hline
+		
+	\end{tabularx}
+	
+\end{table}
+
+\FloatBarrier
+
+La coincidencia de los valores hash confirma que los artefactos especializados almacenados en el backend corresponden a los identificados en el manifiesto experimental. Los valores completos se conservan en dicho archivo como evidencia técnica de su integridad.
+
+\subsubsection{Control de versiones}
+
+La verificación del entorno local y de los artefactos se realizó sobre la rama \texttt{master} del repositorio \texttt{Rhyzome-Back}, correspondiente a la rama destinada al despliegue de producción. La revisión utilizada se identifica mediante el commit \texttt{3cafba8}, registrado el 21 de noviembre de 2026 como resultado de la integración de la rama \texttt{release} mediante el Pull Request número 26.
+
+El registro de las condiciones experimentales, la verificación de integridad de los artefactos y el control de versiones proporcionan una base para la reproducibilidad y trazabilidad del componente inteligente. La reproducción exacta del entrenamiento requiere, adicionalmente, disponer del notebook experimental, la versión original del conjunto de datos y las condiciones de ejecución correspondientes.
+
+% ==============================================================================================
 \section{Métricas de evaluación}
 \label{sec:metricas_ia}
 
+La evaluación del componente inteligente de Rhyzome se fundamenta en métricas de clasificación, estabilidad experimental y rendimiento computacional, orientadas a determinar la capacidad de los modelos para identificar los niveles de complejidad de los mapas generados.
+
+Estas métricas permiten comparar el desempeño de los clasificadores bajo las condiciones experimentales establecidas y proporcionar criterios cuantitativos para la selección de los modelos especializados.
+
+% ==============================================================================================
+
 \subsection{Métricas de clasificación}
-% Conservar únicamente las métricas efectivamente utilizadas; agregar referencias bibliográficas.
-La evaluación de un clasificador multiclase puede realizarse mediante exactitud, precisión, sensibilidad y puntuación F1. Para una clase determinada, $VP$, $FP$ y $FN$ representan verdaderos positivos, falsos positivos y falsos negativos, respectivamente.
-\begin{equation}
-	\mathrm{Accuracy}=\frac{\sum_{i=1}^{N}\mathbf{1}(y_i=\hat{y}_i)}{N}
-\end{equation}
-\begin{equation}
-	P=\frac{VP}{VP+FP},\qquad R=\frac{VP}{VP+FN}
-\end{equation}
-\begin{equation}
-	F_1=\frac{2PR}{P+R},\qquad F_{1,\mathrm{macro}}=\frac{1}{K}\sum_{k=1}^{K}F_{1,k}
-\end{equation}
-Aquí $N$ representa el número de muestras evaluadas y $K$ el número de clases. El promedio macro asigna el mismo peso a cada clase.
-% Confirmar tratamiento de denominadores cero y tipo de promedio realmente usado.
-Además de estas métricas se reportan exactitud balanceada y ROC-AUC multiclase One-vs-Rest. El criterio principal del estudio por familia es F1 macro de validación cruzada.
 
+La evaluación de los clasificadores considera un problema de clasificación multiclase compuesto por tres niveles de complejidad: bajo, medio y alto. Para determinar el desempeño predictivo se utilizaron métricas de exactitud, exactitud balanceada, precisión, sensibilidad, puntuación F1 y área bajo la curva ROC, mediante las funciones de evaluación proporcionadas por scikit-learn \parencite{pedregosa2011}.
+
+Para una clase $k$, se definen los siguientes elementos:
+
+\begin{itemize}
+	
+	\item $VP_k$: verdaderos positivos, correspondientes a las muestras de la clase $k$ clasificadas correctamente.
+	
+	\item $FP_k$: falsos positivos, correspondientes a muestras de otras clases clasificadas incorrectamente como pertenecientes a la clase $k$.
+	
+	\item $FN_k$: falsos negativos, correspondientes a muestras de la clase $k$ clasificadas incorrectamente en otra categoría.
+	
+\end{itemize}
+
+\subsubsection{Exactitud (Accuracy)}
+
+La exactitud representa la proporción de muestras clasificadas correctamente respecto al total de muestras evaluadas. Su expresión matemática se define mediante:
+
+\begin{equation}
+	\mathrm{Accuracy} =
+	\frac{
+		\sum_{i=1}^{N}
+		\mathbf{1}(y_i=\hat{y}_i)
+	}{N}
+	\label{eq:accuracy}
+\end{equation}
+
+Donde $N$ representa el número total de muestras, $y_i$ corresponde a la clase real, $\hat{y}_i$ representa la clase predicha y $\mathbf{1}(\cdot)$ es la función indicadora, cuyo valor es uno cuando la condición se cumple y cero en caso contrario.
+
+\subsubsection{Exactitud balanceada (Balanced Accuracy)}
+
+La exactitud balanceada corresponde al promedio de la sensibilidad obtenida para cada clase, otorgando la misma importancia a todos los niveles de complejidad, independientemente de su frecuencia en el conjunto de evaluación.
+
+\begin{equation}
+	\mathrm{BalancedAccuracy} =
+	\frac{1}{K}
+	\sum_{k=1}^{K}
+	\frac{VP_k}{VP_k+FN_k}
+	\label{eq:balanced_accuracy}
+\end{equation}
+
+Donde $K$ representa el número de clases, correspondiente a tres en el problema de clasificación de Rhyzome.
+
+\subsubsection{Precisión (Precision)}
+
+La precisión mide la proporción de predicciones correctas entre las muestras clasificadas como pertenecientes a una determinada clase.
+
+\begin{equation}
+	P_k =
+	\frac{VP_k}{VP_k+FP_k}
+	\label{eq:precision}
+\end{equation}
+
+Para la evaluación multiclase se utilizó el promedio macro, definido como:
+
+\begin{equation}
+	P_{\mathrm{macro}} =
+	\frac{1}{K}
+	\sum_{k=1}^{K}P_k
+	\label{eq:precision_macro}
+\end{equation}
+
+\subsubsection{Sensibilidad (Recall)}
+
+La sensibilidad mide la capacidad del clasificador para identificar correctamente las muestras que pertenecen a una determinada clase.
+
+\begin{equation}
+	R_k =
+	\frac{VP_k}{VP_k+FN_k}
+	\label{eq:recall}
+\end{equation}
+
+El promedio macro de sensibilidad se calcula mediante:
+
+\begin{equation}
+	R_{\mathrm{macro}} =
+	\frac{1}{K}
+	\sum_{k=1}^{K}R_k
+	\label{eq:recall_macro}
+\end{equation}
+
+En un problema de clasificación multiclase convencional, cuando se consideran las mismas clases presentes en el conjunto de evaluación, la sensibilidad macro y la exactitud balanceada son matemáticamente equivalentes.
+
+\subsubsection{Puntuación F1 (F1-score)}
+
+La puntuación F1 corresponde a la media armónica entre la precisión y la sensibilidad, permitiendo evaluar conjuntamente ambos indicadores para cada clase.
+
+\begin{equation}
+	F_{1,k} =
+	\frac{2P_kR_k}{P_k+R_k}
+	\label{eq:f1_score}
+\end{equation}
+
+Para la evaluación de los tres niveles de complejidad se utilizó F1 macro, definido como el promedio aritmético de las puntuaciones F1 individuales:
+
+\begin{equation}
+	F_{1,\mathrm{macro}} =
+	\frac{1}{K}
+	\sum_{k=1}^{K}F_{1,k}
+	\label{eq:f1_macro}
+\end{equation}
+
+El promedio macro asigna el mismo peso a cada clase, evitando que el desempeño de las categorías con mayor representación determine de manera predominante el resultado de la evaluación.
+
+En el cálculo de precisión, sensibilidad y F1 sobre el conjunto de prueba se utilizó la configuración \texttt{zero\_division=0}, mediante la cual se asigna un valor de cero cuando la métrica no se encuentra definida debido a un denominador igual a cero.
+
+\subsubsection{Área bajo la curva ROC (ROC-AUC)}
+
+El área bajo la curva ROC permite evaluar la capacidad de discriminación del clasificador a partir de las probabilidades estimadas para cada clase, considerando diferentes umbrales de decisión.
+
+La curva ROC relaciona la tasa de verdaderos positivos (TPR) con la tasa de falsos positivos (FPR):
+
+\begin{equation}
+	\mathrm{TPR}_k =
+	\frac{VP_k}{VP_k+FN_k},
+	\qquad
+	\mathrm{FPR}_k =
+	\frac{FP_k}{FP_k+VN_k}
+	\label{eq:roc_rates}
+\end{equation}
+
+Donde $VN_k$ representa los verdaderos negativos correspondientes a la clase evaluada.
+
+Para el problema multiclase de Rhyzome se utilizó la estrategia One-vs-Rest (OVR), mediante la cual cada nivel de complejidad se compara individualmente contra las clases restantes. El resultado global se obtiene mediante el promedio macro de las áreas calculadas:
+
+\begin{equation}
+	\mathrm{AUC}_{\mathrm{OVR,macro}} =
+	\frac{1}{K}
+	\sum_{k=1}^{K}\mathrm{AUC}_k
+	\label{eq:auc_macro}
+\end{equation}
+
+Los valores próximos a uno representan una mayor capacidad de discriminación entre las clases de complejidad, mientras que un valor cercano a 0,5 representa un comportamiento equivalente a una ordenación aleatoria en términos de discriminación.
+
+\subsubsection{Consolidación de las métricas de clasificación}
+
+La Tabla~\ref{tab:metricas_clasificacion_ia} sintetiza las métricas utilizadas y su propósito dentro del procedimiento experimental.
+
+\begin{table}[htbp]
+	\centering
+	
+	\caption{Métricas utilizadas para la evaluación
+		de los clasificadores}
+	\label{tab:metricas_clasificacion_ia}
+	
+	\renewcommand{\arraystretch}{1.5}
+	
+	\begin{tabularx}{\textwidth}{
+			|>{\raggedright\arraybackslash}p{3.5cm}|
+			>{\raggedright\arraybackslash}X|
+			>{\centering\arraybackslash}p{2cm}|
+		}
+		
+		\hline
+		
+		\rowcolor{gray!15}
+		\textbf{Métrica} &
+		\textbf{Propósito} &
+		\textbf{Rango} \\
+		
+		\hline
+		
+		Accuracy &
+		Determinar la proporción de mapas clasificados
+		correctamente. &
+		$[0,1]$ \\
+		
+		\hline
+		
+		Balanced Accuracy &
+		Evaluar el desempeño considerando la misma
+		importancia para cada clase. &
+		$[0,1]$ \\
+		
+		\hline
+		
+		Precision macro &
+		Medir la precisión promedio de las predicciones
+		por nivel de complejidad. &
+		$[0,1]$ \\
+		
+		\hline
+		
+		Recall macro &
+		Medir la capacidad promedio de identificar
+		correctamente las muestras de cada clase. &
+		$[0,1]$ \\
+		
+		\hline
+		
+		F1 macro &
+		Evaluar el equilibrio entre precisión y
+		sensibilidad para las diferentes clases. &
+		$[0,1]$ \\
+		
+		\hline
+		
+		ROC-AUC OVR macro &
+		Evaluar la capacidad de discriminación entre
+		los niveles de complejidad. &
+		$[0,1]$ \\
+		
+		\hline
+		
+	\end{tabularx}
+	
+\end{table}
+
+\FloatBarrier
+
+La puntuación F1 macro obtenida mediante validación cruzada constituye el criterio principal de comparación y selección de los clasificadores especializados, mientras que las demás métricas complementan el análisis de su desempeño predictivo.
+
+% ==============================================================================================
+
+% ==============================================================================================
 \subsection{Matrices de confusión}
-% Incorporar matrices reales, preferiblemente de los modelos seleccionados por familia.
-% Indicar partición, orden de clases, ejes real/predicho y si son conteos o porcentajes.
-% Analizar confusiones entre clases, no limitarse a insertar imágenes.
-Para V2, la matriz de prueba registrada, con filas reales y columnas predichas en orden bajo, medio y alto, es:\begin{equation}\begin{pmatrix}493&11&0\\9&490&5\\0&4&500\end{pmatrix}\end{equation} Se observan 29 errores en 1.512 muestras, principalmente entre clases adyacentes. \pendiente{Incorporar matrices de los clasificadores especializados.}
+\label{subsec:matrices_confusion}
 
+La matriz de confusión permite analizar la correspondencia entre las clases reales y las predicciones realizadas por un clasificador, identificando los aciertos y errores asociados a los tres niveles de complejidad considerados en Rhyzome: bajo, medio y alto.
+
+Para un problema de clasificación multiclase, cada elemento de la matriz de confusión se define mediante:
+
+\begin{equation}
+	C_{ij} =
+	\sum_{n=1}^{N}
+	\mathbf{1}(y_n=i \land \hat{y}_n=j)
+	\label{eq:matriz_confusion}
+\end{equation}
+
+Donde $N$ representa el número de muestras evaluadas, $i$ corresponde a la clase real y $j$ a la clase predicha. Los elementos de la diagonal principal representan las clasificaciones correctas, mientras que los elementos restantes corresponden a los errores de clasificación.
+
+La Figura~\ref{fig:matrices_confusion_experimento_1} presenta las matrices de confusión de los seis clasificadores considerados durante la evaluación global del experimento de clasificación especializada, documentado en el notebook \path{experimento_clasificacion_especializada.ipynb}.
+
+Cada matriz contiene los resultados correspondientes a 2.000 mapas de prueba, equivalentes al 20\,\% del conjunto de datos experimental. Las filas representan las clases reales y las columnas las clases predichas, expresadas mediante frecuencias absolutas y organizadas en el orden bajo, medio y alto.
+
+\begin{figure}[htbp]
+	\centering
+	
+	\includegraphics[
+	width=\textwidth,
+	keepaspectratio
+	]{imagenes/matrices_confusion_experimento_1.png}
+	
+	\caption{Matrices de confusión de los clasificadores
+		en la evaluación global}
+	\label{fig:matrices_confusion_experimento_1}
+	
+\end{figure}
+
+\FloatBarrier
+
+El análisis de las matrices evidencia que el modelo MLP presenta el mayor número de clasificaciones correctas, con 1.628 aciertos de las 2.000 muestras evaluadas, seguido de Random Forest y SVM con kernel RBF.
+
+Los errores de clasificación se concentran principalmente entre niveles de complejidad adyacentes. En particular, la categoría de complejidad media presenta el menor número de aciertos en los seis clasificadores, lo que indica una mayor dificultad para distinguir esta categoría de los niveles bajo y alto.
+
+Estos resultados complementan las métricas cuantitativas de clasificación y permiten identificar patrones de error que no se observan directamente mediante indicadores agregados como la exactitud o F1 macro.
+
+Cabe señalar que las matrices corresponden a la evaluación global de los clasificadores y no a la evaluación especializada por familia procedural. Por tanto, su interpretación complementa el análisis experimental, sin sustituir los criterios de selección de los modelos especializados incorporados en Rhyzome.
+
+% ==============================================================================================
 \subsection{Métricas estructurales de los mapas}
-Las métricas estructurales describen propiedades de los escenarios y se distinguen de las métricas de desempeño de clasificación.
-% Confirmar conectividad, accesibilidad, densidad de obstáculos y demás indicadores implementados.
-% Explicar su función en la evaluación adaptativa y diferenciar métricas de entrada y salida.
-\pendiente{Documentar las métricas estructurales utilizadas y sus definiciones verificadas.}
+\label{subsec:metricas_estructurales}
 
-% ============================================================
+Las métricas estructurales permiten caracterizar las propiedades espaciales, topológicas y semánticas de los mapas generados en Rhyzome. A diferencia de las métricas de clasificación, que evalúan el desempeño predictivo de los modelos de aprendizaje automático, estos indicadores describen la distribución del espacio transitable, la conectividad de las regiones y la composición de los escenarios.
+
+La evaluación estructural comprende tres conjuntos de indicadores: las métricas calculadas por el backend, las características utilizadas por el componente inteligente y las métricas complementarias obtenidas en el frontend para facilitar la interpretación de los mapas generados.
+
+% ==============================================================================================
+\subsubsection{Representación estructural de los mapas}
+
+Los mapas de Rhyzome se representan mediante tres capas matriciales de dimensiones $H \times W$, correspondientes al terreno, los objetos y las colisiones.
+
+La capa de terreno identifica las categorías que conforman la superficie del escenario, la capa de objetos representa los elementos ubicados sobre dicha superficie y la capa de colisiones establece las restricciones de desplazamiento.
+
+Sea $C$ la matriz de colisiones, cuyos elementos se definen mediante:
+
+\begin{equation}
+	C_{ij} =
+	\begin{cases}
+		0, & \text{si la celda es transitable}, \\
+		1, & \text{si la celda está bloqueada}.
+	\end{cases}
+	\label{eq:matriz_colisiones}
+\end{equation}
+
+Para la extracción de características del componente inteligente, esta representación se transforma mediante:
+
+\begin{equation}
+	G_{ij} = 1-C_{ij}
+	\label{eq:transformacion_matriz_ml}
+\end{equation}
+
+La matriz resultante utiliza el valor uno para representar las celdas transitables y cero para las celdas bloqueadas, conservando la distribución espacial del escenario.
+
+Para formalizar el cálculo de las métricas estructurales, se establecen las siguientes variables:
+
+\begin{itemize}
+	\item $W$: ancho del mapa.
+	\item $H$: altura del mapa.
+	\item $N$: número total de celdas.
+	\item $T$: número de celdas transitables.
+	\item $L$: tamaño de la mayor región transitable
+	conectada.
+	\item $R$: número de regiones transitables conectadas.
+	\item $O$: número de celdas que contienen objetos.
+\end{itemize}
+
+El número total de celdas y la cantidad de celdas transitables se determinan mediante:
+
+\begin{equation}
+	N = H \times W,
+	\qquad
+	T = \sum_{i=1}^{H}\sum_{j=1}^{W}G_{ij}
+	\label{eq:celdas_estructurales}
+\end{equation}
+
+% ==============================================================================================
+\subsubsection{Métricas de evaluación estructural del backend}
+
+El servicio de evaluación estructural calcula indicadores relacionados con la transitabilidad, la conectividad y la composición semántica de los escenarios. Estos indicadores se incorporan al objeto \texttt{metrics} de la respuesta del servicio de generación.
+
+\paragraph{Accesibilidad o transitabilidad.}
+
+Representa la proporción de celdas disponibles para el desplazamiento respecto al tamaño total del mapa.
+
+\begin{equation}
+	A = \frac{T}{N}
+	\label{eq:transitabilidad_mapa}
+\end{equation}
+
+Un valor elevado indica una mayor disponibilidad de espacio transitable, aunque no garantiza que todas las celdas disponibles se encuentren conectadas.
+
+\paragraph{Conectividad y regiones conectadas.}
+
+La conectividad representa la proporción del espacio transitable perteneciente a la región conectada de mayor tamaño.
+
+\begin{equation}
+	Q_c = \frac{L}{\max(T,1)}
+	\label{eq:conectividad_estructural}
+\end{equation}
+
+La identificación de regiones se realiza mediante un recorrido en anchura (Breadth-First Search, BFS), considerando la adyacencia ortogonal entre celdas.
+
+El número de regiones conectadas corresponde a la cantidad de componentes transitables independientes identificados durante este procedimiento.
+
+\begin{equation}
+	N_r = R
+	\label{eq:regiones_conectadas}
+\end{equation}
+
+La combinación de estos indicadores permite distinguir escenarios con espacios transitables continuos de aquellos que presentan regiones aisladas o fragmentadas.
+
+\paragraph{Densidad de objetos.}
+
+Representa la proporción de celdas que contienen algún elemento en la capa de objetos.
+
+\begin{equation}
+	D_{\mathrm{obj}} = \frac{O}{N}
+	\label{eq:densidad_objetos}
+\end{equation}
+
+Este indicador describe la ocupación del escenario por elementos semánticos, como árboles, rocas, edificios y otros objetos. No equivale necesariamente a la densidad de obstáculos, debido a que las restricciones de desplazamiento se establecen en la capa de colisiones.
+
+\paragraph{Coherencia y diversidad semántica.}
+
+La coherencia semántica se evalúa mediante el conteo de solapamientos inválidos entre las capas de terreno y objetos, de acuerdo con las restricciones implementadas por el sistema.
+
+Adicionalmente, se contabilizan las categorías de terreno y de objetos presentes en el escenario, permitiendo describir su diversidad semántica.
+
+La Tabla~\ref{tab:metricas_estructurales_v2} consolida los indicadores calculados directamente por el servicio de evaluación estructural.
+
+\begin{table}[htbp]
+	\centering
+	
+	\caption{Métricas estructurales calculadas en el backend}
+	\label{tab:metricas_estructurales_v2}
+	
+	\renewcommand{\arraystretch}{1.5}
+	
+	\begin{tabularx}{\textwidth}{
+			|>{\raggedright\arraybackslash}p{3.2cm}|
+			>{\raggedright\arraybackslash}p{4.2cm}|
+			>{\raggedright\arraybackslash}X|
+		}
+		
+		\hline
+		
+		\rowcolor{gray!15}
+		\textbf{Métrica} &
+		\textbf{Identificador} &
+		\textbf{Propósito} \\
+		
+		\hline
+		
+		Transitabilidad &
+		\path{transitabilidad} &
+		Determinar la proporción de espacio disponible
+		para el desplazamiento. \\
+		
+		\hline
+		
+		Conectividad &
+		\path{mayor_region_ratio} &
+		Identificar la proporción del espacio transitable
+		perteneciente a la mayor región conectada. \\
+		
+		\hline
+		
+		Regiones conectadas &
+		\path{regiones} &
+		Contabilizar los componentes transitables
+		independientes. \\
+		
+		\hline
+		
+		Densidad de objetos &
+		\path{densidad_objetos} &
+		Determinar la proporción de celdas ocupadas
+		por objetos. \\
+		
+		\hline
+		
+		Solapamientos inválidos &
+		\path{solapamientos_invalidos} &
+		Contabilizar las inconsistencias contempladas
+		por las restricciones semánticas. \\
+		
+		\hline
+		
+		Tipos de terreno &
+		\path{tipos_terreno} &
+		Contabilizar las categorías de terreno
+		presentes en el escenario. \\
+		
+		\hline
+		
+		Tipos de objetos &
+		\path{tipos_objetos} &
+		Contabilizar las categorías de objetos,
+		excluyendo las celdas vacías. \\
+		
+		\hline
+		
+	\end{tabularx}
+	
+\end{table}
+
+\FloatBarrier
+
+% ==============================================================================================
+\subsubsection{Métricas complementarias y visualización}
+
+La interfaz gráfica complementa los indicadores proporcionados por el backend mediante el cálculo de determinadas propiedades a partir de las capas del mapa y de las métricas estructurales disponibles.
+
+\paragraph{Densidad de obstáculos.}
+
+Representa la proporción de celdas bloqueadas respecto al número total de celdas del mapa.
+
+\begin{equation}
+	D_{\mathrm{obs}} =
+	\frac{N-T}{N} = 1-A
+	\label{eq:densidad_obstaculos}
+\end{equation}
+
+La accesibilidad y la densidad de obstáculos constituyen indicadores complementarios de la distribución del espacio transitable.
+
+\paragraph{Mayor área transitable.}
+
+Representa la proporción del mapa ocupada por la mayor región transitable conectada.
+
+\begin{equation}
+	A_{\max} =
+	A \cdot Q_c = \frac{L}{N}
+	\label{eq:mayor_area_transitable}
+\end{equation}
+
+A diferencia de la conectividad, cuyo cálculo considera únicamente las celdas transitables, este indicador utiliza el tamaño total del escenario como referencia.
+
+\paragraph{Balance estructural.}
+
+El balance estructural constituye un indicador heurístico que mide la cercanía de la accesibilidad respecto a una proporción transitable de referencia del 65\,\%.
+
+\begin{equation}
+	B =
+	\max\left(0,1-\left|A-0.65\right|\right)
+	\label{eq:balance_estructural}
+\end{equation}
+
+El indicador alcanza su valor máximo cuando la accesibilidad coincide con la proporción de referencia. Este valor corresponde a un criterio descriptivo establecido en Rhyzome y no representa una condición universal de calidad para todos los escenarios.
+
+\paragraph{Entropía estructural del terreno.}
+
+La interfaz gráfica puede calcular la entropía de las categorías de terreno presentes en cada fila y columna cuando estos indicadores no son proporcionados en el objeto de métricas consultado.
+
+Para una fila o columna, la entropía de Shannon se define mediante:
+
+\begin{equation}
+	\mathcal{H} =
+	-\sum_{k=1}^{K}p_k\log_2(p_k)
+	\label{eq:entropia_terreno}
+\end{equation}
+
+donde $K$ representa el número de categorías presentes y $p_k$ corresponde a la frecuencia relativa de la categoría $k$.
+
+La entropía promedio por filas y columnas se determina mediante:
+
+\begin{equation}
+	E_f =
+	\frac{1}{H}\sum_{i=1}^{H}\mathcal{H}_i,
+	\qquad
+	E_c =
+	\frac{1}{W}\sum_{j=1}^{W}\mathcal{H}_j
+	\label{eq:entropia_filas_columnas}
+\end{equation}
+
+Estos indicadores describen la diversidad de categorías de terreno a lo largo de las dimensiones del escenario. Su cálculo se diferencia de la entropía binaria utilizada por el componente inteligente, que considera únicamente la distribución de celdas transitables y bloqueadas.
+
+\paragraph{Perfil estructural del mapa.}
+
+La interfaz gráfica dispone de un gráfico radar compuesto por seis ejes, orientado a representar conjuntamente las principales propiedades estructurales del escenario.
+
+La Tabla~\ref{tab:indicadores_radar} presenta los indicadores considerados en esta representación.
+
+\begin{table}[htbp]
+	\centering
+	
+	\caption{Indicadores del perfil estructural del mapa}
+	\label{tab:indicadores_radar}
+	
+	\renewcommand{\arraystretch}{1.5}
+	
+	\begin{tabularx}{\textwidth}{
+			|>{\raggedright\arraybackslash}p{3.5cm}|
+			>{\raggedright\arraybackslash}X|
+			>{\centering\arraybackslash}p{2cm}|
+		}
+		
+		\hline
+		
+		\rowcolor{gray!15}
+		\textbf{Indicador} &
+		\textbf{Interpretación} &
+		\textbf{Escala} \\
+		
+		\hline
+		
+		Accesibilidad &
+		Proporción de espacio transitable. &
+		$[0,1]$ \\
+		
+		\hline
+		
+		Conectividad &
+		Concentración del espacio transitable
+		en la mayor región conectada. &
+		$[0,1]$ \\
+		
+		\hline
+		
+		Área abierta &
+		Proporción del mapa ocupada por la
+		mayor región transitable. &
+		$[0,1]$ \\
+		
+		\hline
+		
+		Balance &
+		Cercanía a la proporción transitable
+		de referencia. &
+		$[0,1]$ \\
+		
+		\hline
+		
+		Bordes &
+		Densidad de transiciones entre celdas
+		transitables y bloqueadas. &
+		$[0,1]$ \\
+		
+		\hline
+		
+		Obstáculos &
+		Proporción de celdas bloqueadas. &
+		$[0,1]$ \\
+		
+		\hline
+		
+	\end{tabularx}
+	
+\end{table}
+
+\FloatBarrier
+
+El gráfico radar constituye una representación descriptiva y no una puntuación global de calidad. Por tanto, un valor elevado en todos sus ejes no implica necesariamente que el escenario sea superior a otro.
+
+La disponibilidad de los indicadores depende de los valores proporcionados por el backend y de los cálculos complementarios implementados en la interfaz gráfica.
+
+% ==============================================================================================
+\subsubsection{Relación con el componente inteligente y la generación adaptativa}
+
+El componente inteligente utiliza ocho características obtenidas a partir de la representación binaria del escenario:
+
+\begin{itemize}
+	\item Proporción de celdas transitables.
+	\item Número de regiones conectadas.
+	\item Proporción de la mayor región conectada.
+	\item Densidad de bordes.
+	\item Entropía binaria promedio por filas.
+	\item Entropía binaria promedio por columnas.
+	\item Varianza local.
+	\item Relación entre perímetro y área transitable.
+\end{itemize}
+
+Estas características permiten representar la distribución espacial, la fragmentación, la heterogeneidad y la organización geométrica de los escenarios, proporcionando la información requerida para estimar su nivel de complejidad.
+
+El servicio de generación incorpora estas características en el objeto \path{ml.ml_features}, diferenciándolas de los indicadores descriptivos contenidos en el objeto \texttt{metrics}.
+
+Durante la generación adaptativa, cada mapa candidato es evaluado mediante el componente de aprendizaje automático. La selección prioriza la coincidencia entre la complejidad predicha y la complejidad solicitada, seguida de la probabilidad asignada a la clase objetivo.
+
+Las métricas estructurales de salida no constituyen criterios independientes de ordenamiento de los candidatos. Su relación con la selección se establece a través de las características estructurales utilizadas por el clasificador.
+
+% ==============================================================================================
+\subsubsection{Verificación de las métricas estructurales}
+
+Para comprobar la correspondencia entre las métricas implementadas y los resultados proporcionados por el servicio de generación, se realizó una solicitud al endpoint \path{/api/maps/generate-adaptive},  utilizando un mapa de bosque de dimensiones $50 \times 35$, complejidad media, semilla 12345, variante B y diez intentos de generación adaptativa, con el componente inteligente habilitado.
+
+El escenario seleccionado contiene un total de 1750 celdas, de las cuales 1233 son transitables, 517 se encuentran bloqueadas y 482 contienen objetos.
+
+La Tabla~\ref{tab:verificacion_metricas_estructurales} presenta los indicadores obtenidos en la respuesta del servicio y las métricas complementarias derivadas a partir de dichos resultados.
+
+\begin{table}[htbp]
+	\centering
+	
+	\caption{Resultados de evaluación estructural de un mapa de bosque}
+	\label{tab:verificacion_metricas_estructurales}
+	
+	\renewcommand{\arraystretch}{1.5}
+	
+	\begin{tabularx}{\textwidth}{
+			|>{\raggedright\arraybackslash}X|
+			>{\centering\arraybackslash}p{2.5cm}|
+			>{\raggedright\arraybackslash}p{3.5cm}|
+		}
+		
+		\hline
+		
+		\rowcolor{gray!15}
+		\textbf{Indicador} &
+		\textbf{Resultado} &
+		\textbf{Procedencia} \\
+		
+		\hline
+		
+		Transitabilidad &
+		0,704571 &
+		Backend \\
+		
+		\hline
+		
+		Conectividad &
+		1,000000 &
+		Backend \\
+		
+		\hline
+		
+		Regiones conectadas &
+		1 &
+		Backend \\
+		
+		\hline
+		
+		Densidad de objetos &
+		0,275429 &
+		Backend \\
+		
+		\hline
+		
+		Solapamientos inválidos &
+		0 &
+		Backend \\
+		
+		\hline
+		
+		Tipos de terreno &
+		3 &
+		Backend \\
+		
+		\hline
+		
+		Tipos de objetos &
+		2 &
+		Backend \\
+		
+		\hline
+		
+		Densidad de obstáculos &
+		0,295429 &
+		Cálculo complementario \\
+		
+		\hline
+		
+		Mayor área transitable &
+		0,704571 &
+		Cálculo complementario \\
+		
+		\hline
+		
+		Balance estructural &
+		0,945429 &
+		Cálculo complementario \\
+		
+		\hline
+		
+		Densidad de bordes &
+		0,402317 &
+		Característica de ML \\
+		
+		\hline
+		
+	\end{tabularx}
+	
+\end{table}
+
+\FloatBarrier
+
+La transitabilidad se verificó de manera independiente a partir de la matriz de colisiones mediante:
+
+\begin{equation}
+	A = \frac{1233}{1750}
+	\approx 0.704571
+	\label{eq:verificacion_transitabilidad}
+\end{equation}
+
+De igual manera, la densidad de obstáculos y la densidad de objetos se determinaron mediante:
+
+\begin{equation}
+	D_{\mathrm{obs}} =
+	\frac{517}{1750}
+	\approx 0.295429
+	\label{eq:verificacion_obstaculos}
+\end{equation}
+
+\begin{equation}
+	D_{\mathrm{obj}} =
+	\frac{482}{1750}
+	\approx 0.275429
+	\label{eq:verificacion_objetos}
+\end{equation}
+
+La identificación independiente de componentes conectados permitió comprobar que las 1233 celdas transitables pertenecen a una única región, obteniendo:
+
+\begin{equation}
+	Q_c = \frac{1233}{1233} = 1
+	\label{eq:verificacion_conectividad}
+\end{equation}
+
+Los resultados obtenidos coinciden con los indicadores correspondientes proporcionados por el backend, confirmando la consistencia de los cálculos verificados para el escenario evaluado.
+
+Adicionalmente, el componente inteligente clasificó el mapa seleccionado con un nivel de complejidad medio, coincidente con la clase solicitada. La generación adaptativa ejecutó los diez intentos configurados y seleccionó el primer candidato, correspondiente a la semilla 12345.
+
+La respuesta identifica el modo de evaluación como \path{experimental_v2} y mantiene la compatibilidad experimental como no validada. Por tanto, esta verificación demuestra la ejecución funcional del mecanismo de generación y evaluación estructural para el caso analizado, sin constituir por sí sola una validación general del desempeño predictivo del clasificador.
+
+% ==============================================================================================
+
 \section{Validación cruzada}
 \label{sec:validacion_cruzada_ia}
+
+
+% ==============================================================================================
 \subsection{Estrategia de validación experimental}
 % Verificar si hubo K-fold, StratifiedKFold, holdout u otro procedimiento.
 % Si no hubo validación cruzada, declararlo expresamente; no presentar holdout como K-fold.
